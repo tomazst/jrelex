@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane prefHeight="800.0" prefWidth="1100.0" xmlns:fx="http://javafx.com/fxml" fx:controller="si.comptus.jrelex.MainController">
+  <center>
+    <TabPane id="tabPanePageShow" fx:id="tabPaneTopDisplay" />
+  </center>
+  <top>
+    <HBox id="" prefHeight="28.0" prefWidth="1100.0" style="-fx-padding:3;" styleClass="menu-bar">
+      <children>
+        <Hyperlink id="menuItem" fx:id="menuItemExploreDatabase" style="-fx-padding: 0 10 0 10;-fx-text-fill:#FFFFFF" text="Explore database" />
+        <Hyperlink id="menuItem" fx:id="menuItemManageDatabase" style="-fx-padding: 0 10 0 10;-fx-text-fill:#FFFFFF" text="Manage databases" />
+        <Hyperlink id="menuItem" style="-fx-padding: 0 10 0 10;-fx-text-fill:#FFFFFF" text="Help" />
+        <Hyperlink id="menuItem" fx:id="menuItemClose" style="-fx-padding: 0 10 0 10;-fx-text-fill:#FFFFFF" text="Close" />
+      </children>
+    </HBox>
+  </top>
+</BorderPane>

@@ -1,0 +1,111 @@
+/* Application wide styles */
+/*
+.label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+*/
+
+/*
+.button {
+    -fx-text-fill: #EEEEEE;
+    
+    -fx-font-family: "Arial Narrow";
+    -fx-font-weight: bold;
+    -fx-background-color: linear-gradient(#6D6968, #BCC6CC);
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+}
+*/
+
+/*
+.button:hover {
+    -fx-base: #395bae;
+}
+*/
+.menu-item-button {
+	-fx-background-color: #9ACD32;
+}
+
+.menu-item-button:hover {
+	-fx-cursor: hand;
+	-fx-text-fill: #FFFFFF;
+}
+
+.menu-item-button:pressed {
+	-fx-translate-x: 1;
+	-fx-translate-y: 1;
+}
+
+.img-button:hover {
+	-fx-cursor: hand;
+}
+
+.img-button:pressed {
+	-fx-translate-x: 1;
+	-fx-translate-y: 1;
+}
+
+/*
+.main-panel {
+    -fx-background-image: url("../images/background.jpg");
+}
+*/
+/*
+.hello-message {
+    -fx-text-fill: #AA0000;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow( gaussian , rgba(255,255,255,0.5) , 0,0,0,1 );
+}
+*/
+.progress-bar > .bar {
+    -fx-background-color: linear-gradient(
+        from 0px .75em to .75em 0px,
+        repeat,
+        -fx-accent 0%,
+        -fx-accent 49%,
+        derive(-fx-accent, 30%) 50%,
+        derive(-fx-accent, 30%) 99%
+    );
+}
+
+.jrx-button {
+    -fx-background-color: transparent;
+    -fx-padding: 4px 7px 4px 7px;
+}
+
+.jrx-button:hover {
+    -fx-border-color: #BBBBBB;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3;
+    -fx-background-color: #EEEEEE;
+    -fx-padding: 3px 6px 3px 6px;
+}
+
+.jrx-button:armed {
+    -fx-translate-x: 1;
+    -fx-translate-y: 1;
+}
+
+.jrx-menu-button {
+    -fx-background-color: transparent;
+    -fx-padding: 4px 7px 4px 7px;
+    -fx-text-fill: #E5E4E2;
+    -fx-font-weight: bold;
+}
+
+.jrx-menu-button:hover {
+    -fx-border-color: #BBBBBB;
+    -fx-border-width: 1px;
+    -fx-border-radius: 3;
+    -fx-background-color: #888888;
+    -fx-padding: 3px 6px 3px 6px;
+}
+
+.jrx-menu-button:armed {
+    -fx-translate-x: 1;
+    -fx-translate-y: 1;
+}
+
+

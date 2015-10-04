@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import com.panemu.tiwulfx.control.*?>
+
+<SplitPane id="verticalScrollPane" fx:id="verticalSplitPane" focusTraversable="true" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="si.comptus.jrelex.DatabaseExplorerController">
+  <items>
+    <SplitPane fx:id="explorerSplitPane" dividerPositions="0.23705408515535098" focusTraversable="true">
+      <items>
+        <TabPane fx:id="leftSideTabPane" prefHeight="200.0" prefWidth="200.0" side="LEFT">
+          <tabs>
+            <Tab id="database-tree" fx:id="databaseTree" text="Databases">
+              <content>
+                <VBox>
+                  <children>
+                    <HBox id="idFilterHBox" fx:id="hboxFilter" alignment="CENTER" minHeight="35.0" prefHeight="35.0">
+                      <children>
+                        <ImageView id="imgViewDatabase" fx:id="imgViewDatabaseFilter" />
+                        <TextField fx:id="txtDatabaseFilter" alignment="TOP_LEFT" onKeyReleased="#filterDatabasesFromTreeView" prefHeight="22.0" promptText="DB filter" style="-fx-font-size: 12" HBox.hgrow="ALWAYS" />
+                        <ImageView id="imgViewTable" fx:id="imgViewTableFilter" />
+                        <TextField fx:id="txtTableFilter" alignment="TOP_LEFT" onKeyReleased="#filterTablesFromTreeView" prefHeight="22.0" promptText="TBL filter" style="-fx-font-size: 12" HBox.hgrow="ALWAYS" />
+                        <Button styleClass="jrx-button">
+                            <tooltip><Tooltip text="Reload"/></tooltip>
+                            <graphic>
+                                <ImageView id="imgViewReload" fx:id="imgViewReloadDatabaseList" onMouseClicked="#reloadDatabaseTree" />
+                            </graphic>
+                        </Button>
+                      </children>
+                      <padding>
+                        <Insets bottom="3.0" left="2.0" right="2.0" top="3.0" />
+                      </padding>
+                    </HBox>
+                    <TreeView fx:id="trvDatabaseList" maxHeight="1.7976931348623157E308" style="-fx-background-color: #FFFFFF" VBox.vgrow="ALWAYS">
+                      <VBox.margin>
+                        <Insets />
+                      </VBox.margin>
+                    </TreeView>
+                  </children>
+                </VBox>
+              </content>
+            </Tab>
+          </tabs>
+        </TabPane>
+        <DetachableTabPane id="tabPaneExploreDatabases" fx:id="exploreTablesTabPane" prefHeight="690.0" prefWidth="623.0" />
+      </items>
+    </SplitPane>
+  </items>
+</SplitPane>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.panemu.tiwulfx.form.*?>
+<?import com.panemu.tiwulfx.table.*?>
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.collections.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox spacing="5.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="si.comptus.jrelex.DatabaseMetaDataController">
+   <children>
+      <VBox maxWidth="150.0" prefWidth="150.0" spacing="5.0" HBox.hgrow="ALWAYS">
+         <children>
+             <HBox alignment="CENTER_RIGHT">
+                <children>
+                    <Button onAction="#newConnection" styleClass="jrx-button">
+                    <tooltip><Tooltip text="New" /></tooltip>
+                    <graphic>
+                        <ImageView>
+                           <image><Image url="@images/window-new.png" /></image>
+                        </ImageView>
+                    </graphic>
+                    </Button>
+                    <Button fx:id="btnSave" onAction="#saveConnection" styleClass="jrx-button">
+                       <tooltip><Tooltip text="Save" /></tooltip>
+                       <graphic>
+                           <ImageView>
+                              <image><Image url="@images/save.png" /></image>
+                           </ImageView>
+                       </graphic>
+                     </Button>
+                     <Button onAction="#deleteConnection" styleClass="jrx-button">
+                       <tooltip><Tooltip text="Delete" /></tooltip>
+                       <graphic>
+                           <ImageView>
+                              <image><Image url="@images/bd_drop.png" /></image>
+                           </ImageView>
+                       </graphic>
+                     </Button>
+                  </children>
+             </HBox>
+            <GridPane hgap="5.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="266.0" prefWidth="380.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <Label prefWidth="80.0" text="Hostname:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                  <Label prefWidth="80.0" text="Username:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                  <Label prefWidth="80.0" text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                  <Label prefWidth="80.0" text="Database:" GridPane.columnIndex="0" GridPane.rowIndex="10" />
+                  <ComboBox fx:id="cbDbms" prefHeight="21.0" prefWidth="300.0" promptText="..." GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="0">
+                     <items>
+                        <FXCollections fx:factory="observableArrayList">
+                           <String fx:value="MySQL" />
+                           <String fx:value="MSSQL" />
+                           <String fx:value="ORACLE" />
+                        </FXCollections>
+                     </items>
+                  </ComboBox>
+                  <TextField fx:id="txfName" prefWidth="154.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="2" />
+                  <TextField fx:id="txfHostname" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="1" GridPane.rowIndex="4" />
+                  <ComboBox fx:id="cbPort" editable="true" promptText="0000" GridPane.columnIndex="3" GridPane.rowIndex="4">
+                     <items>
+                        <FXCollections fx:factory="observableArrayList">
+                           <String fx:value="3306" />
+                           <String fx:value="1433" />
+                        </FXCollections>
+                     </items>
+                  </ComboBox>
+                  <TextField fx:id="txfUsername" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="6" />
+                  <PasswordField id="pwfPasword" fx:id="pwfPassword" prefWidth="200.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="8" />
+                  <ComboBox fx:id="cbDatabase" editable="true" prefHeight="25.0" prefWidth="300.0" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="10" />
+                  <Label prefWidth="50.0" text="Port:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+                  <Label prefWidth="80.0" text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                  <Label prefWidth="80.0" text="RDBMS:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                  <Label fx:id="lblHostname" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="5" />
+                  <Label fx:id="lblPort" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="5" />
+                  <Label fx:id="lblUsername" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="7" />
+                  <Label fx:id="lblPassword" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="9" />
+                  <Label fx:id="lblDatabase" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="11" />
+                  <Label fx:id="lblDbms" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="1" />
+                  <Label fx:id="lblName" GridPane.columnIndex="0" GridPane.columnSpan="4" GridPane.rowIndex="3" />
+                  <Button onAction="#reloadDatabaseList"  styleClass="jrx-button" GridPane.columnIndex="4" GridPane.rowIndex="10">
+                    <graphic>
+                        <ImageView pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/reload.png" />
+                           </image>
+                        </ImageView>
+                    </graphic>
+                  </Button>
+               </children>
+               <columnConstraints>
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="80.0" minWidth="10.0" prefWidth="80.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="140.0" minWidth="10.0" prefWidth="140.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="45.0" minWidth="40.0" prefWidth="45.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="70.0" minWidth="10.0" prefWidth="70.0" />
+                  <ColumnConstraints hgrow="SOMETIMES" maxWidth="50.0" minWidth="10.0" prefWidth="50.0" />
+               </columnConstraints>
+               <rowConstraints>
+                  <RowConstraints fillHeight="false" maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                  <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+               </rowConstraints>
+            </GridPane>
+            <ProgressBar fx:id="progressBar" prefHeight="0.0" prefWidth="410.0" progress="0.0" />
+            <TextArea fx:id="txtProgress" editable="false" prefWidth="100.0" promptText="Progress ..." VBox.vgrow="NEVER" />
+         </children>
+         <padding>
+            <Insets left="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <Separator orientation="VERTICAL" />
+      <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+         <children>
+            <HBox prefHeight="20.0" prefWidth="200.0">
+               <children>                                                     
+                  <ImageView id="ivDatabaseFilter" fitHeight="0.0" fitWidth="0.0" pickOnBounds="true" preserveRatio="true">
+                     <HBox.margin>
+                        <Insets bottom="2.0" top="2.0" />
+                     </HBox.margin>
+                     <image>
+                         <Image url="@images/database.png" />
+                     </image>
+                  </ImageView>
+                  <TextField id="txtDatabaseFilter" onKeyTyped="#filterDatabasesFromTreeView" prefHeight="22.0" prefWidth="-1.0" promptText="DB filter" HBox.hgrow="ALWAYS" />
+                  <ImageView id="ivTableFilter" fitHeight="0.0" fitWidth="0.0" pickOnBounds="true" preserveRatio="true"> 
+                    <HBox.margin>
+                        <Insets bottom="2.0" top="2.0" />
+                    </HBox.margin>
+                    <image>
+                        <Image url="@images/b_sbrowse.png" />
+                    </image>
+                  </ImageView>
+                  <TextField id="txtTableFilter" onKeyTyped="#filterTablesFromTreeView" prefHeight="22.0" prefWidth="-1.0" promptText="TBL filter" HBox.hgrow="ALWAYS" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER_RIGHT" prefHeight="15.0" prefWidth="200.0">
+                <children>
+                    <Button fx:id="btnRevertSelection" onAction="#revertSelection" styleClass="jrx-button">
+                        <HBox.margin>
+                           <Insets bottom="1.0" left="0.0" />
+                        </HBox.margin>
+                        <graphic>
+                            <ImageView>
+                               <image>
+                                  <Image url="@images/reload.png" />
+                               </image>
+                            </ImageView>
+                        </graphic>
+                    <tooltip><Tooltip text="Revert selected" /></tooltip>
+                    </Button>
+                    <Button fx:id="btnSaveSelection" onAction="#saveSelection" styleClass="jrx-button">
+                        <HBox.margin>
+                           <Insets bottom="1.0" left="5.0" />
+                        </HBox.margin>
+                        <graphic>
+                            <ImageView>
+                               <image>
+                                  <Image url="@images/save.png" />
+                               </image>
+                            </ImageView>
+                        </graphic>
+                        <tooltip><Tooltip text="Save selected" /></tooltip>
+                    </Button>
+                 </children>
+            </HBox>
+            <TreeView fx:id="trvDatabaseList" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS" />
+         </children>
+         <padding>
+            <Insets right="5.0" />
+         </padding>
+         <HBox.margin>
+            <Insets />
+         </HBox.margin>
+      </VBox>
+   </children>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
+</HBox>
