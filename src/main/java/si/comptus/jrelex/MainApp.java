@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.panemu.tiwulfx.common.TiwulFXUtil;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import com.panemu.tiwulfx.table.TableControl;
+import java.sql.SQLException;
 import java.util.ResourceBundle;
 
 public class MainApp extends Application {
@@ -58,6 +59,14 @@ public class MainApp extends Application {
     	} catch (Exception e){
     		log.error(e.getMessage(), e);
 			MessageDialogBuilder.error(e).show(null);
-    	}
+    	} finally{
+            try {
+                Common.getInstance().getDatabaseInteraction().closeConnections();
+                System.out.println("Povezave do baze so zaprte");
+            } catch(SQLException e) {
+                log.error(e.getMessage(), e);
+		MessageDialogBuilder.error(e).show(null);
+            }
+        }
     }
 }

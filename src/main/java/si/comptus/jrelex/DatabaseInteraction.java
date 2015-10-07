@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -40,7 +41,7 @@ public class DatabaseInteraction {
 	private HashMap<String, Connection> conections = null;
 
 	public DatabaseInteraction() {
-		this.conections = new HashMap<String, Connection>();
+            this.conections = new HashMap<String, Connection>();
 	}
 
 	/**
@@ -68,6 +69,12 @@ public class DatabaseInteraction {
 		}
 		return this.conections.get(connectionName);
 	}
+        
+        public void closeConnections() throws SQLException {
+            for(Map.Entry<String, Connection> entry : this.conections.entrySet()){
+                entry.getValue().close();
+            }
+        }
 
 	/**
 	 * Generates the data source for database.
@@ -101,7 +108,7 @@ public class DatabaseInteraction {
 
 		return null;
 	}
-        
+                
         /**
 	 * Generates the data source for database.
 	 * 

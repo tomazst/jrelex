@@ -297,6 +297,7 @@ public class DatabaseMetaDataController implements Initializable {
                 vo.setPort(Integer.parseInt(cbPort.getValue()));
             }
             vo.setUsername(txfUsername.getText());
+            vo.setPassword(pwfPassword.getText());
             if(cbDatabase.getValue() == null){
                 vo.setDatabase(cbDatabase.getEditor().getText());
             } else {
@@ -558,164 +559,202 @@ public class DatabaseMetaDataController implements Initializable {
 
                     String[] types = { "TABLE" };
                     ResultSet resultSetTables = databaseMetaData.getTables(connection.getCatalog(), null, null, types);
+                    try {                   
 
-                    ArrayList<CReference> tempReferences = new ArrayList<CReference>();
+                        ArrayList<CReference> tempReferences = new ArrayList<CReference>();
 
-                    // count tables
-                    int tableCount=0;
-                    while(resultSetTables.next()) {
-                        // we check if user has access. MSSQL has always dbo.
-                        String TABLE_SCHEM = resultSetTables.getString(2);
-                        if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
-                                if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
-                                        continue;
+                        // count tables
+                        int tableCount=0;
+                        while(resultSetTables.next()) {
+                            // we check if user has access. MSSQL has always dbo.
+                            String TABLE_SCHEM = resultSetTables.getString(2);
+                            if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
+                                    if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
+                                            continue;
+                                    }
+                            }		
+
+                            //we check if is table
+                            String TYPE = resultSetTables.getString(4);
+                            if(!TYPE.equals("TABLE")){
+                                    continue;
+                            }
+                            
+                            if(bean.getDriver().equals("ORACLE")){
+                                if(resultSetTables.getString(3).startsWith("BIN")){ // Tables that begin on BIN are omited
+                                    continue;
                                 }
-                        }		
-
-                        //we check if is table
-                        String TYPE = resultSetTables.getString(4);
-                        if(!TYPE.equals("TABLE")){
-                                continue;
+                            }
+                            
+                            tableCount++;
                         }
-                        tableCount++;
-                    }
 
-                    if(bean.getDriver().equals("MSSQL") 
-                                    || bean.getDriver().equals("ORACLE")){ // does not iterate the cursor
+                        if(bean.getDriver().equals("MSSQL")) {// does not iterate the cursor
                             resultSetTables = databaseMetaData.getTables(connection.getCatalog(), null, null, types);
-                    } else {
+                        } else if(bean.getDriver().equals("ORACLE")){
+                            resultSetTables = databaseMetaData.getTables(connection.getCatalog(), connection.getSchema(), null, types);
+                        } else {
                             resultSetTables.beforeFirst();
-                    }
+                        }
 
-                    // TABLES
-                    dbcontainer.setTables(new HashMap<String, CTable>(tableCount));
-                    int ix = 1;
-                    txtProgress.setText("");
-                    while(resultSetTables.next()) {
+                        // TABLES
+                        dbcontainer.setTables(new HashMap<String, CTable>(tableCount));
+                        int ix = 1;
+                        txtProgress.setText("");
+                        while(resultSetTables.next()) {
 
-                        // we check if user has access
-                        String TABLE_SCHEM = resultSetTables.getString(2);
-                        if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
-                                if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
-                                        continue;
+                            // we check if user has access
+                            String TABLE_SCHEM = resultSetTables.getString(2);
+                            if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
+                                    if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
+                                            continue;
+                                    }
+                            }
+
+                            //we check if is table
+                            String TYPE = resultSetTables.getString(4);
+                            if(!TYPE.equals("TABLE")){
+                                
+                                    continue;
+                            }
+
+                            String tableName = resultSetTables.getString(3); // get table name
+                            if(bean.getDriver().equals("ORACLE")){
+                                if(tableName.startsWith("BIN")){
+                                    continue;
                                 }
-                        }
+                            }
+                            //log.info(ix+". Obdelujem tabelo "+tableName);
+                            txtProgress.setText(txtProgress.getText()+"Reading table: "+tableName+" - "+ix+" of "+tableCount+"\n");
+                            txtProgress.setScrollTop(Double.MAX_VALUE);
+                            float progress = (float)ix / (float)tableCount;
+                            progressBar.setProgress(progress);
+                            ix++;
 
-                        //we check if is table
-                        String TYPE = resultSetTables.getString(4);
-                        if(!TYPE.equals("TABLE")){
-                                continue;
-                        }
+                            CTable ctable = new CTable();
+                            ctable.setName(tableName);
 
-                        String tableName = resultSetTables.getString(3); // get table name
-                        //log.info(ix+". Obdelujem tabelo "+tableName);
-                        txtProgress.setText(txtProgress.getText()+"Reading table: "+tableName+" - "+ix+" of "+tableCount+"\n");
-                        txtProgress.setScrollTop(Double.MAX_VALUE);
-                        float progress = (float)ix / (float)tableCount;
-                        progressBar.setProgress(progress);
-                        ix++;
+                            // COLUMNS
+                            ResultSet resultSetColumns = null;
+                            int initialSize=0;
+                            try  {
+                                resultSetColumns = databaseMetaData.getColumns(
+                                            connection.getCatalog(), 
+                                            connection.getSchema(), tableName, null);
+                                // get initial size for columns
+                                while(resultSetColumns.next()){
+                                        initialSize++;
+                                }
+                            }finally{
+                                resultSetColumns.close();
+                            }
+                            
+                            try {
 
-                        CTable ctable = new CTable();
-                        ctable.setName(tableName);
-
-                        // COLUMNS
-                        ResultSet resultSetColumns = databaseMetaData.getColumns(
-                                        connection.getCatalog(), 
-                                        null, tableName, null);
-
-                        // get initial size for columns
-                        int initialSize=0;
-                        while(resultSetColumns.next()){
-                                initialSize++;
-                        }
-
-                        if(bean.getDriver().equals("MSSQL")
-                                        || bean.getDriver().equals("ORACLE")){ // does not iterate the cursor
+                                // COLUMNS
+                                /*if(bean.getDriver().equals("MSSQL") ||
+                                        bean.getDriver().equals("ORACLE")) {*/
+                                resultSetColumns = databaseMetaData.getColumns(
+                                                connection.getCatalog(), 
+                                                connection.getSchema(), tableName, null);
+                                /*} else {
+                                        resultSetColumns.beforeFirst();
+                                }*/
+                                /*
                                 resultSetColumns = databaseMetaData.getColumns(
                                                 connection.getCatalog(), 
                                                 null, tableName, null);
-                        } else {
-                                resultSetColumns.beforeFirst();
-                        }
+                                */
+                                ctable.setColumns(new ArrayList<CColumn>(initialSize));
+                                ctable.setColumnNames(new ArrayList<String>(initialSize));
 
-                        // COLUMNS
-                        resultSetColumns = databaseMetaData.getColumns(
-                                        connection.getCatalog(), 
-                                        null, tableName, null);
+                                while(resultSetColumns.next()){
+                                        CColumn ccolumn = new CColumn();
 
-                        ctable.setColumns(new ArrayList<CColumn>(initialSize));
-                        ctable.setColumnNames(new ArrayList<String>(initialSize));
+                                        ccolumn.setName(resultSetColumns.getString(4)); // column name
+                                        Integer type = resultSetColumns.getInt(5);
+                                        ccolumn.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column type
 
-                        while(resultSetColumns.next()){
-                                CColumn ccolumn = new CColumn();
+                                        ctable.getColumns().add(ccolumn);
+                                        ctable.getColumnNames().add(ccolumn.getName());
 
-                                ccolumn.setName(resultSetColumns.getString(4)); // column name
-                                Integer type = resultSetColumns.getInt(5);
-                                ccolumn.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column type
-
-                                ctable.getColumns().add(ccolumn);
-                                ctable.getColumnNames().add(ccolumn.getName());
-
-                        }
-
-                        //Collections.reverse(ctable.getColumnNames());
-
-                        // we add primary key info
-                        ResultSet resultSetPrimaryKeys = databaseMetaData
-                                        .getPrimaryKeys(connection.getCatalog(), null, tableName);
-                        while (resultSetPrimaryKeys.next()){
-                                String columnName = resultSetPrimaryKeys.getString(4);
-                                ctable.getColumnByName(columnName).setPrimaryKey(true);
-                        }
-                        //String catalog = connection.getCatalog();
-
-                        ResultSet resultExportedKeys = databaseMetaData
-                                        .getExportedKeys(connection.getCatalog(), null, tableName);
-                        while(resultExportedKeys.next()){
-                                String pKColumnName = resultExportedKeys.getString(4);
-
-                                CReference creference = new CReference();
-                                creference.setTable(resultExportedKeys.getString(3)); // pktable_name
-                                creference.setColumn(pKColumnName); // pkcolum_name
-                                creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
-                                creference.setReferencedColumn(resultExportedKeys.getString(8)); // fkcolum_name
-
-                                tempReferences.add(creference);
-
-                                //ctable.getColumnByName(pKColumnName).setForeignKey(true);
-
-                                if(ctable.getColumnByName(pKColumnName).getReferences() == null){
-                                        ctable.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
                                 }
-                                ctable.getColumnByName(pKColumnName).getReferences().add(creference);
-                        }
+                            }finally{
+                                resultSetColumns.close();
+                            }
+                                
+                            //Collections.reverse(ctable.getColumnNames());
 
-
-                        ResultSet resultImportedKeys = databaseMetaData
-                                        .getImportedKeys(connection.getCatalog(), null, tableName);
-                        while(resultImportedKeys.next()){
-                                String pKColumnName = resultImportedKeys.getString(4);
-                                String fKColumnName = resultImportedKeys.getString(8);
-
-                                CReference creference = new CReference();
-                                creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
-                                creference.setReferencedColumn(pKColumnName); // pkcolum_name
-                                creference.setTable(resultImportedKeys.getString(7)); // fktable_name
-                                creference.setColumn(fKColumnName); // fkcolum_name
-
-                                tempReferences.add(creference);
-
-                                ctable.getColumnByName(fKColumnName).setForeignKey(true);
-
-                                if(ctable.getColumnByName(fKColumnName).getReferences() == null){
-                                        ctable.getColumnByName(fKColumnName).setReferences(new ArrayList<CReference>());
+                            // we add primary key info
+                            ResultSet resultSetPrimaryKeys = databaseMetaData
+                                            .getPrimaryKeys(connection.getCatalog(), null, tableName);
+                            try {
+                                while (resultSetPrimaryKeys.next()){
+                                        String columnName = resultSetPrimaryKeys.getString(4);
+                                        ctable.getColumnByName(columnName).setPrimaryKey(true);
                                 }
-                                ctable.getColumnByName(fKColumnName).getReferences().add(creference);
+                            } finally {
+                                resultSetPrimaryKeys.close();
+                            }
+                            //String catalog = connection.getCatalog();
+
+                            ResultSet resultExportedKeys = databaseMetaData
+                                            .getExportedKeys(connection.getCatalog(), null, tableName);
+                            try {
+                                while(resultExportedKeys.next()){
+                                        String pKColumnName = resultExportedKeys.getString(4);
+
+                                        CReference creference = new CReference();
+                                        creference.setTable(resultExportedKeys.getString(3)); // pktable_name
+                                        creference.setColumn(pKColumnName); // pkcolum_name
+                                        creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
+                                        creference.setReferencedColumn(resultExportedKeys.getString(8)); // fkcolum_name
+
+                                        tempReferences.add(creference);
+
+                                        //ctable.getColumnByName(pKColumnName).setForeignKey(true);
+
+                                        if(ctable.getColumnByName(pKColumnName).getReferences() == null){
+                                                ctable.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
+                                        }
+                                        ctable.getColumnByName(pKColumnName).getReferences().add(creference);
+                                }
+                            } finally {
+                                resultExportedKeys.close();
+                            }
+
+
+                            ResultSet resultImportedKeys = databaseMetaData
+                                            .getImportedKeys(connection.getCatalog(), null, tableName);
+                            try {
+                                while(resultImportedKeys.next()){
+                                    String pKColumnName = resultImportedKeys.getString(4);
+                                    String fKColumnName = resultImportedKeys.getString(8);
+
+                                    CReference creference = new CReference();
+                                    creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
+                                    creference.setReferencedColumn(pKColumnName); // pkcolum_name
+                                    creference.setTable(resultImportedKeys.getString(7)); // fktable_name
+                                    creference.setColumn(fKColumnName); // fkcolum_name
+
+                                    tempReferences.add(creference);
+
+                                    ctable.getColumnByName(fKColumnName).setForeignKey(true);
+
+                                    if(ctable.getColumnByName(fKColumnName).getReferences() == null){
+                                            ctable.getColumnByName(fKColumnName).setReferences(new ArrayList<CReference>());
+                                    }
+                                    ctable.getColumnByName(fKColumnName).getReferences().add(creference);
+                            }
+                            }finally {
+                                resultImportedKeys.close();
+                            }
+
+                            dbcontainer.getTables().put(ctable.getName(), ctable);	
+
                         }
-
-
-                        dbcontainer.getTables().put(ctable.getName(), ctable);	
-
+                    }finally{
+                        resultSetTables.close();
                     }
 			
 		} catch (SQLException e) {
