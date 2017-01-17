@@ -1,3 +1,21 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
 package si.comptus.jrelex;
 
 import java.io.File;
@@ -18,21 +36,15 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import si.comptus.jrelex.container.CColumn;
 import si.comptus.jrelex.container.CColumnTableReferences;
 import si.comptus.jrelex.container.CPosition;
 import si.comptus.jrelex.container.CTable;
-import si.comptus.jrelex.sql.AbstractDynamicQuery;
-import si.comptus.jrelex.sql.DynamicQueryMysql;
-import si.comptus.jrelex.sql.DynamicQueryOracle;
-import si.comptus.jrelex.sql.DynamicQuerySqlserver;
+import si.comptus.jrelex.database.DynamicQueryAbstract;
 
 import com.panemu.tiwulfx.common.ExportToExcel;
 import com.panemu.tiwulfx.common.TableCriteria;
@@ -41,71 +53,65 @@ import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import com.panemu.tiwulfx.table.BaseColumn;
 import com.panemu.tiwulfx.table.TableControl;
 import com.panemu.tiwulfx.table.TableController;
+import si.comptus.jrelex.configuration.RDBMSType;
+import si.comptus.jrelex.database.DynamicQueryFactory;
 
 public class DatabaseTableController<T> extends TableController<T> {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(DatabaseTableController.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(DatabaseTableController.class);
 
-	private Class<T> clazz;
-	private String databaseName;
-	private AbstractDynamicQuery dq;
-	private List<TableCriteria<T>> filteredColumns = null;
-	private String storedDatabaseName = "";
-	private TableControl<T> exploreTable;
-	private CTable databaseTable;
-	
-	public DatabaseTableController(TableControl<T> exploreTable,
-			Connection conn, String databaseName, T obj, CTable databaseTable,
-			String storedDatabaseName) {
-		super();
+    private Class<T> clazz;
+    private String databaseName;
+    private DynamicQueryAbstract dq;
+    private List<TableCriteria<T>> filteredColumns = null;
+    private String storedDatabaseName = "";
+    private TableControl<T> exploreTable;
+    private CTable databaseTable;
 
-		this.exploreTable = exploreTable;
-		this.clazz = (Class<T>) obj.getClass();
+    public DatabaseTableController(TableControl<T> exploreTable,
+            Connection conn, String databaseName, T obj, CTable databaseTable,
+            String storedDatabaseName) throws JRelExException {
+        super();
 
-		this.databaseName = databaseName;
-		this.databaseTable = databaseTable;
-		this.storedDatabaseName = storedDatabaseName;
-		
-		String vendor = Common.getInstance().getDbstore().getDatabases()
-				.get(storedDatabaseName).getConnBean().getDriver();
-		if (vendor.equalsIgnoreCase("MySQL")) {
-			this.dq = new DynamicQueryMysql(conn);
-		}
+        this.exploreTable = exploreTable;
+        this.clazz = (Class<T>) obj.getClass();
 
-		if (vendor.equalsIgnoreCase("MSSQL")) {
-			this.dq = new DynamicQuerySqlserver(conn);
-		}
+        this.databaseName = databaseName;
+        this.databaseTable = databaseTable;
+        this.storedDatabaseName = storedDatabaseName;
 
-		if (vendor.equalsIgnoreCase("ORACLE")) {
-			this.dq = new DynamicQueryOracle(conn);
-		}
-	}
-	
-	public List<TableCriteria<T>> getFilteredColumns() {
-		return filteredColumns;
-	}
+        RDBMSType vendor = Common.getInstance().getDbstore().getDatabases()
+                .get(storedDatabaseName).getConnBean().getDriver();
 
-	public void setFilteredColumns(List<TableCriteria<T>> filteredColumns) {
-		this.filteredColumns = filteredColumns;
-	}
-		
-	@Override
-	public TableData loadData(int startIndex,
-			List<TableCriteria> filteredColumns, List<String> sortedColumns,
-			List<SortType> sortingOrders, int maxResult) {
+        this.dq = DynamicQueryFactory.getDynamicQuery(vendor, conn);
 
-		ArrayList<String> filters = new ArrayList<String>();
+    }
 
-		if (this.filteredColumns != null) {
-			for (TableCriteria<T> criteria : this.filteredColumns) {
-				filteredColumns.add(criteria);
-				filters.add(criteria.getAttributeName());
-			}
-			// then we empty local filters
-			this.filteredColumns = null;
-		}
-/*
+    public List<TableCriteria<T>> getFilteredColumns() {
+        return filteredColumns;
+    }
+
+    public void setFilteredColumns(List<TableCriteria<T>> filteredColumns) {
+        this.filteredColumns = filteredColumns;
+    }
+
+    @Override
+    public TableData loadData(int startIndex,
+            List<TableCriteria> filteredColumns, List<String> sortedColumns,
+            List<SortType> sortingOrders, int maxResult) {
+
+        ArrayList<String> filters = new ArrayList<String>();
+
+        if (this.filteredColumns != null) {
+            for (TableCriteria<T> criteria : this.filteredColumns) {
+                filteredColumns.add(criteria);
+                filters.add(criteria.getAttributeName());
+            }
+            // then we empty local filters
+            this.filteredColumns = null;
+        }
+        /*
 		// Hack - adding icons for foreign and primary keys
 		for (TableColumn<T, ?> col : exploreTable.getTableView().getColumns()) { // go
 																							// throo
@@ -150,160 +156,166 @@ public class DatabaseTableController<T> extends TableController<T> {
 
 					}
 				}
-*/
-		ResultSet rs = this.dq.getTableData(databaseTable, databaseName,
-				this.storedDatabaseName, filteredColumns, sortedColumns,
-				sortingOrders, startIndex, maxResult);
+         */
+        ResultSet rs = this.dq.getTableData(databaseTable, databaseName,
+                this.storedDatabaseName, filteredColumns, sortedColumns,
+                sortingOrders, startIndex, maxResult);
 
-		ArrayList<T> data = new ArrayList<T>();
+        ArrayList<T> data = new ArrayList<T>();
 
-		int position = startIndex;
-		// table data
-		// ResultSet rs = rc.intoResultSet();
-		// rc = null;
-		try {
-			ResultSetMetaData rsmd = rs.getMetaData();
-			
-			// we get number of referenced columns (primary and foreign) for
-			// initialize capacity for hashmap
-			int count = 0;
-			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-				if (databaseTable.getColumnByName(rsmd.getColumnName(i))
-						.getReferences() != null) {
-					count++;
-				}
-			}
-			
-			// calculate max length from position numbers
-			Integer maxPosition = position+maxResult;
-			int maxPositionStringLength = maxPosition.toString().length();
+        int position = startIndex;
+        // table data
+        // ResultSet rs = rc.intoResultSet();
+        // rc = null;
+        try {
+            ResultSetMetaData rsmd = rs.getMetaData();
 
-			int n = 0;
-			while (rs.next()) { // table row
-				T obj=null;
-				HashMap<String, CColumnTableReferences> references = new HashMap<>(count);
-				try {
+            // we get number of referenced columns (primary and foreign) for
+            // initialize capacity for hashmap
+            int count = 0;
+            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                if (databaseTable.getColumnByName(rsmd.getColumnName(i))
+                        .getReferences() != null) {
+                    count++;
+                }
+            }
 
-					obj = clazz.newInstance();
-					
-					for (int i = 1; i <= rsmd.getColumnCount(); i++) { // columns
-						int type = rsmd.getColumnType(i);
+            // calculate max length from position numbers
+            Integer maxPosition = position + maxResult;
+            int maxPositionStringLength = maxPosition.toString().length();
 
-						String columnName = rsmd.getColumnName(i);
-						/*
+            int n = 0;
+            while (rs.next()) { // table row
+                T obj = null;
+                HashMap<String, CColumnTableReferences> references = new HashMap<>(count);
+                try {
+
+                    obj = clazz.newInstance();
+
+                    for (int i = 1; i <= rsmd.getColumnCount(); i++) { // columns
+                        int type = rsmd.getColumnType(i);
+
+                        String columnName = rsmd.getColumnName(i);
+                        if (columnName.equals("female")) {
+                            boolean debug = true;
+                        }
+                        /*
 						 * If column has references to other tables then we
 						 * save and ad it to the data
-						 */
-						 if(databaseTable.getColumnByName(columnName).getReferences() != null) {
-						  
-							 CColumnTableReferences referenceObj = new CColumnTableReferences();
-							 referenceObj.setStoredDatabaseName(storedDatabaseName);
-							 referenceObj.setDatabaseName(databaseName);
-							 referenceObj.setTableName(databaseTable.getName());
-							 referenceObj.setColumn(databaseTable.getColumnByName(columnName
-							 )); referenceObj.setValue(rs.getString(i));
-							 referenceObj.setDq(this.dq);
-							 references.put(columnName, referenceObj);
-						 
-						 }
-						 
-						switch (type) {
-						case Types.INTEGER:
-						case Types.TINYINT:
-						case Types.SMALLINT:
-						case Types.BIGINT:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getInt(columnName));
-							break;
-						case Types.FLOAT:
-						case Types.DECIMAL:
-						case Types.NUMERIC:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getFloat(columnName));
-							break;
-						case Types.DOUBLE:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getDouble(columnName));
-							break;
-						case Types.BOOLEAN:
-						case Types.BIT:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getBoolean(columnName));
-							break;
-						case Types.DATE:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getDate(columnName));
-							break;
-						case Types.TIMESTAMP:
-							// TODO tiwulfx table does't support TIMESTAMP
-							Timestamp ts = rs.getTimestamp(columnName);
-							if (ts == null) {
-								PropertyUtils.setProperty(obj, columnName, ts);
-							} else {
-								PropertyUtils.setProperty(obj, columnName,
-										ts.toString());
-							}
-							break;
-						case Types.TIME:
-							// TODO tiwulfx table does't support TIME
-							Time time = rs.getTime(rsmd.getColumnName(i));
-							if (time == null) {
-								PropertyUtils
-										.setProperty(obj, columnName, time);
-							} else {
-								PropertyUtils.setProperty(obj, columnName,
-										time.toString());
-							}
-							break;
-						default:
-							PropertyUtils.setProperty(obj, columnName,
-									rs.getString(columnName));
+                         */
+                        if (databaseTable.getColumnByName(columnName).getReferences() != null) {
 
-						}
+                            CColumnTableReferences referenceObj = new CColumnTableReferences();
+                            referenceObj.setStoredDatabaseName(storedDatabaseName);
+                            referenceObj.setDatabaseName(databaseName);
+                            referenceObj.setTableName(databaseTable.getName());
+                            referenceObj.setColumn(databaseTable.getColumnByName(columnName
+                            ));
+                            referenceObj.setValue(rs.getString(i));
+                            referenceObj.setDq(this.dq);
+                            references.put(columnName, referenceObj);
 
-					}
+                        }
 
-					
-					PropertyUtils.setProperty(obj, "references", references);
-					CPosition positionObj = new CPosition();
-					positionObj.setPosition(++position);
-					positionObj.setMaxPositionStringLength(maxPositionStringLength);
-					PropertyUtils.setProperty(obj, "position", positionObj);
-					
+                        switch (type) {
+                            case Types.INTEGER:
+                            case Types.TINYINT:
+                            case Types.SMALLINT:
+                            case Types.BIGINT:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getInt(columnName));
+                                break;
+                            case Types.FLOAT:
+                            case Types.DECIMAL:
+                            case Types.NUMERIC:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getFloat(columnName));
+                                break;
+                            case Types.DOUBLE:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getDouble(columnName));
+                                break;
+                            case Types.BOOLEAN:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getBoolean(columnName));
+                            case Types.BIT:
+                                byte b = rs.getByte(columnName);
+                                Boolean tmpVar = true;
+                                if(b == 0){
+                                    tmpVar = false;
+                                }
+                                PropertyUtils.setProperty(obj, columnName,
+                                        tmpVar);
+                                break;
+                            case Types.DATE:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getDate(columnName));
+                                break;
+                            case Types.TIMESTAMP:
+                                // TODO tiwulfx table does't support TIMESTAMP
+                                Timestamp ts = rs.getTimestamp(columnName);
+                                if (ts == null) {
+                                    PropertyUtils.setProperty(obj, columnName, ts);
+                                } else {
+                                    PropertyUtils.setProperty(obj, columnName,
+                                            ts.toString());
+                                }
+                                break;
+                            case Types.TIME:
+                                // TODO tiwulfx table does't support TIME
+                                Time time = rs.getTime(rsmd.getColumnName(i));
+                                if (time == null) {
+                                    PropertyUtils
+                                            .setProperty(obj, columnName, time);
+                                } else {
+                                    PropertyUtils.setProperty(obj, columnName,
+                                            time.toString());
+                                }
+                                break;
+                            default:
+                                PropertyUtils.setProperty(obj, columnName,
+                                        rs.getString(columnName));
 
-				} catch (InstantiationException | NoSuchMethodException
-						| InvocationTargetException | IllegalAccessException ex) {
-					log.error(ex.getMessage(), ex);
-					MessageDialogBuilder.error(ex).show(null);
-				}
-				data.add(n, obj);
-				n++;
-			}
-			
-			rs.close();
-			
-		} catch (SQLException ex) {
-			log.error(ex.getMessage(), ex);
-			MessageDialogBuilder.error(ex).show(null);
-		}
-		
-		
+                        }
 
-		int countAll = dq.getRecordCount(databaseTable, databaseName,
-				filteredColumns);
-		
-		boolean moreRows=false;
-		if(startIndex < countAll){
-			moreRows=true;
-		}
-		
-		return new TableData<T>(data, moreRows, countAll);
+                    }
 
-	}
+                    PropertyUtils.setProperty(obj, "references", references);
+                    CPosition positionObj = new CPosition();
+                    positionObj.setPosition(++position);
+                    positionObj.setMaxPositionStringLength(maxPositionStringLength);
+                    PropertyUtils.setProperty(obj, "position", positionObj);
 
-	@Override
-	public void exportToExcel(String title, int maxResult, TableControl<T> tblView, List<TableCriteria> lstCriteria) {
-		try {
+                } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ex) {
+                    log.error(ex.getMessage(), ex);
+                    MessageDialogBuilder.error(ex).show(null);
+                }
+                data.add(n, obj);
+                n++;
+            }
+
+            rs.close();
+
+        } catch (SQLException ex) {
+            log.error(ex.getMessage(), ex);
+            MessageDialogBuilder.error(ex).show(null);
+        }
+
+        int countAll = dq.getRecordCount(databaseTable, databaseName,
+                filteredColumns);
+
+        boolean moreRows = false;
+        if (startIndex < countAll) {
+            moreRows = true;
+        }
+
+        return new TableData<T>(data, moreRows, countAll);
+
+    }
+
+    @Override
+    public void exportToExcel(String title, int maxResult, TableControl<T> tblView, List<TableCriteria> lstCriteria) {
+        try {
             ExportToExcel exporter = new ExportToExcel();
             List<Double> lstWidth = new ArrayList<>();
             List<T> data = new ArrayList<>();
@@ -331,11 +343,11 @@ public class DatabaseTableController<T> extends TableController<T> {
 
             String tmpFolder = System.getProperty("java.io.tmpdir");
             File targetFile = File.createTempFile(tblView.getTableView().getId(), ".xls", new File(tmpFolder));
-            
+
             exporter.export(tblView.getTableView().getId(), targetFile.getAbsolutePath(), tblView, data, lstWidth);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-	}
-	
+    }
+
 }

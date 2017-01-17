@@ -1,7 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package si.comptus.jrelex;
 
 import java.io.File;
@@ -31,237 +46,252 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import si.comptus.jrelex.container.CDatabaseStore;
 
-
 /**
- * 
+ *
  * @author tomaz
  */
 public class Common {
 
-	static private Common instance = null;
-	private static final Logger log = LoggerFactory.getLogger(Common.class);
-	private DatabaseInteraction databaseInteraction = null;
-	private Map<Integer, String> jDBCTypes = null;
-	private PojoGenerator pojoGenerator = null;
-	private TabPane explorerLeftSideTabPane;
-	private TabPane tablesTabPane;
-	private SplitPane explorerSplitPane;
-	private ScrollPane referencedDataPane;
-	public SplitPane verticalSplitPane;
-	/**
-	 * It has all stored databases from the disk
-	 */
-	private CDatabaseStore dbstore = null;
+    static private Common instance = null;
+    private static final Logger log = LoggerFactory.getLogger(Common.class);
+    private DatabaseInteraction databaseInteraction = null;
+    private Map<Integer, String> jDBCTypes = null;
+    private PojoGenerator pojoGenerator = null;
+    private TabPane explorerLeftSideTabPane;
+    private TabPane tablesTabPane;
+    private SplitPane explorerSplitPane;
+    private ScrollPane referencedDataPane;
+    public SplitPane verticalSplitPane;
+    /**
+     * It has all stored databases from the disk
+     */
+    private CDatabaseStore dbstore = null;
 
-	private Common() {
-		setDbstore();
-		databaseInteraction = new DatabaseInteraction();
-		jDBCTypes = this.getJdbcTypeName();
-		pojoGenerator = new PojoGenerator();
-	}
+    private Common() {
+        setDbstore();
+        databaseInteraction = new DatabaseInteraction();
+        jDBCTypes = this.getJdbcTypesName();
+        pojoGenerator = new PojoGenerator();
+    }
 
-	static public Common getInstance() {
-		if (instance == null) {
-			instance = new Common();
-		}
-		return instance;
-	}
-	
-	public SplitPane getVerticalSplitPane() {
-		return verticalSplitPane;
-	}
+    static public Common getInstance() {
+        if (instance == null) {
+            instance = new Common();
+        }
+        return instance;
+    }
 
-	public void setVerticalSplitPane(SplitPane verticalSplitPane) {
-		this.verticalSplitPane = verticalSplitPane;
-	}
+    public SplitPane getVerticalSplitPane() {
+        return verticalSplitPane;
+    }
 
-	public PojoGenerator getPojoGenerator() {
-		return pojoGenerator;
-	}
+    public void setVerticalSplitPane(SplitPane verticalSplitPane) {
+        this.verticalSplitPane = verticalSplitPane;
+    }
 
-	public CDatabaseStore getDbstore() {
-		if (dbstore == null) {
-			setDbstore();
-		}
-		return dbstore;
-	}
+    public PojoGenerator getPojoGenerator() {
+        return pojoGenerator;
+    }
 
-	public void setDbstore(CDatabaseStore dbstore) {
-		this.dbstore = dbstore;
-	}
+    public CDatabaseStore getDbstore() {
+        if (dbstore == null) {
+            setDbstore();
+        }
+        return dbstore;
+    }
 
-	public ScrollPane getReferencedDataPane() {
-		return referencedDataPane;
-	}
+    public void setDbstore(CDatabaseStore dbstore) {
+        this.dbstore = dbstore;
+    }
 
-	public void setReferencedDataPane(ScrollPane referencedDataPane) {
-		this.referencedDataPane = referencedDataPane;
-	}
+    public ScrollPane getReferencedDataPane() {
+        return referencedDataPane;
+    }
 
-	/**
-	 * it reads data saved on disk as serialized file
-	 */
-	public void setDbstore() {
-		this.dbstore = this.readSerializedDBMetaDataFromDisk();
-	}
-	
-	public DatabaseInteraction getDatabaseInteraction() {
-		return databaseInteraction;
-	}
+    public void setReferencedDataPane(ScrollPane referencedDataPane) {
+        this.referencedDataPane = referencedDataPane;
+    }
 
-	public void setDatabaseInteraction(DatabaseInteraction databaseInteraction) {
-		this.databaseInteraction = databaseInteraction;
-	}
-	
-	public TabPane getExplorerLeftSideTabPane() {
-		return explorerLeftSideTabPane;
-	}
+    /**
+     * it reads data saved on disk as serialized file
+     */
+    public void setDbstore() {
+        this.dbstore = this.readSerializedDBMetaDataFromDisk();
+    }
 
-	public void setExplorerLeftSideTabPane(TabPane explorerLeftSideTabPane) {
-		this.explorerLeftSideTabPane = explorerLeftSideTabPane;
-	}
+    public DatabaseInteraction getDatabaseInteraction() {
+        return databaseInteraction;
+    }
 
-	public TabPane getTablesTabPane() {
-		return tablesTabPane;
-	}
+    public void setDatabaseInteraction(DatabaseInteraction databaseInteraction) {
+        this.databaseInteraction = databaseInteraction;
+    }
 
-	public void setTablesTabPane(TabPane tablesTabPane) {
-		this.tablesTabPane = tablesTabPane;
-	}
-	
-	public SplitPane getExplorerSplitPane() {
-		return explorerSplitPane;
-	}
+    public TabPane getExplorerLeftSideTabPane() {
+        return explorerLeftSideTabPane;
+    }
 
-	public void setExplorerSplitPane(SplitPane explorerSplitPane) {
-		this.explorerSplitPane = explorerSplitPane;
-	}
+    public void setExplorerLeftSideTabPane(TabPane explorerLeftSideTabPane) {
+        this.explorerLeftSideTabPane = explorerLeftSideTabPane;
+    }
 
-	public Map<Integer, String> getjDBCTypes() {
-		return jDBCTypes;
-	}
+    public TabPane getTablesTabPane() {
+        return tablesTabPane;
+    }
 
-	public void setjDBCTypes(Map<Integer, String> jDBCTypes) {
-		this.jDBCTypes = jDBCTypes;
-	}
-	
-	private Map<Integer, String> getJdbcTypeName() {
-		Map<Integer, String> map = new HashMap<Integer, String>();
+    public void setTablesTabPane(TabPane tablesTabPane) {
+        this.tablesTabPane = tablesTabPane;
+    }
 
-		// Get all field in java.sql.Types
-		Field[] fields = java.sql.Types.class.getFields();
-		for (int i = 0; i < fields.length; i++) {
-			try {
-				String name = fields[i].getName();
-				Integer value = (Integer) fields[i].get(null);
-				map.put(value, name);
-			} catch (IllegalAccessException e) {
-				log.error(e.getMessage(), e);
-				MessageDialogBuilder.error(e).show(null);
-			}
-		}
-		return map;
-	}
+    public SplitPane getExplorerSplitPane() {
+        return explorerSplitPane;
+    }
 
-	private CDatabaseStore readSerializedDBMetaDataFromDisk() {
-		CDatabaseStore dstore = new CDatabaseStore();
-		FileInputStream fis = null;
-		ObjectInputStream in = null;
-		
-		String dir = OSUtils.userDataFolder("jrelex");
-		
-		String filename = "dbmanagement.ser";
-		
-		File file = new File(dir+filename);
-		if (file.exists()) {
-			try {
-				fis = new FileInputStream(dir+filename);
-				in = new ObjectInputStream(fis);
-				dstore = (CDatabaseStore) in.readObject();
-				in.close();
-			} catch (Exception ex) {
-				log.error(ex.getMessage(), ex);
-				MessageDialogBuilder.error(ex).show(null);
-			}
+    public void setExplorerSplitPane(SplitPane explorerSplitPane) {
+        this.explorerSplitPane = explorerSplitPane;
+    }
 
-		}
-		return dstore;
-	}
+    public Map<Integer, String> getjDBCTypes() {
+        return jDBCTypes;
+    }
 
-	public boolean saveSerializedDBMetaDataToDisk(CDatabaseStore dstore) {
-		FileOutputStream fos = null;
-		ObjectOutputStream out = null;
+    public void setjDBCTypes(Map<Integer, String> jDBCTypes) {
+        this.jDBCTypes = jDBCTypes;
+    }
 
-		String dir = OSUtils.userDataFolder("jrelex");
-		
-		File d = new File(dir);
-		if (!d.exists() && !d.isDirectory()) { // create folder
-		   d.mkdir();
-		}
-		
-		String filename = "dbmanagement.ser";
-		
-		try {
+    private Map<Integer, String> getJdbcTypesName() {
+        Map<Integer, String> map = new HashMap<Integer, String>();
 
-			fos = new FileOutputStream(dir+filename);
-			
-			
-			out = new ObjectOutputStream(fos);
-			out.writeObject(dstore);
-			out.close();
-		} catch (Exception ex) {
-			log.error(ex.getMessage(), ex);
-			MessageDialogBuilder.error(ex).show(null);
-		}
+        // Get all field in java.sql.Types
+        Field[] fields = java.sql.Types.class.getFields();
+        for (Field field : fields) {
+            try {
+                String name = field.getName();
+                Integer value = (Integer) field.get(null);
+                map.put(value, name);
+            }
+            catch (IllegalAccessException e) {
+                log.error(e.getMessage(), e);
+                MessageDialogBuilder.error(e).show(null);
+            }
+        }
+        return map;
+    }
 
-		return true;
-	}
+    private CDatabaseStore readSerializedDBMetaDataFromDisk() {
+        CDatabaseStore dstore = new CDatabaseStore();
+        FileInputStream fis = null;
+        ObjectInputStream in = null;
 
-	/**
-	 * If Tab is shown returns true else false
-	 * 
-	 * @param id
-	 * @param tabPane
-	 * @return
-	 */
-	public Tab tabExists(String text, TabPane tabPane) {
+        String dir = OSUtils.userDataFolder("jrelex");
 
-		List<Tab> tabList = (List<Tab>) tabPane.getTabs();
-		
-		for (Tab tab : tabList) {
-			if (text.equals(tab.getText())) {
-				return tab;
-			}
-		}
+        String filename = "dbmanagement.ser";
 
-		return null;
-	}
-	
-	public static <T> List<T> castList(Class<? extends T> clazz, Collection<?> c) {
-	    List<T> r = new ArrayList<T>(c.size());
-	    for(Object o: c)
-	      r.add(clazz.cast(o));
-	    return r;
-	}
-	
-	public void showTooltip(Stage owner, Control control, String tooltipText,
-	    ImageView tooltipGraphic)
-	{
-	    Point2D p = control.localToScene(0.0, 0.0);
+        File file = new File(dir + filename);
+        if (file.exists()) {
+            try {
+                fis = new FileInputStream(dir + filename);
+                in = new ObjectInputStream(fis);
+                dstore = (CDatabaseStore) in.readObject();
+                in.close();
+            } catch (Exception ex) {
+                log.error(ex.getMessage(), ex);
+                MessageDialogBuilder.error(ex).show(null);
+            }
 
-	    final Tooltip customTooltip = new Tooltip();
-	    customTooltip.setText(tooltipText);
+        }
+        return dstore;
+    }
 
-	    control.setTooltip(customTooltip);
-	    customTooltip.setAutoHide(true);
+    public boolean saveSerializedDBMetaDataToDisk(CDatabaseStore dstore) {
+        FileOutputStream fos = null;
+        ObjectOutputStream out = null;
 
-	    customTooltip.show(owner, p.getX()
-	        + control.getScene().getX() + control.getScene().getWindow().getX(), p.getY()
-	        + control.getScene().getY() + control.getScene().getWindow().getY());
+        String dir = OSUtils.userDataFolder("jrelex");
 
-	}
+        File d = new File(dir);
+        if (!d.exists() && !d.isDirectory()) { // create folder
+            d.mkdir();
+        }
+
+        String filename = "dbmanagement.ser";
+
+        try {
+
+            fos = new FileOutputStream(dir + filename);
+
+            out = new ObjectOutputStream(fos);
+            out.writeObject(dstore);
+            out.close();
+        } catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
+            MessageDialogBuilder.error(ex).show(null);
+        }
+
+        return true;
+    }
+
+    /**
+     * If Tab is shown returns true else false
+     *
+     * @param id
+     * @param tabPane
+     * @return
+     */
+    public Tab tabExists(String text, TabPane tabPane) {
+
+        List<Tab> tabList = (List<Tab>) tabPane.getTabs();
+
+        for (Tab tab : tabList) {
+            if (text.equals(tab.getText())) {
+                return tab;
+            }
+        }
+
+        return null;
+    }
+
+    public static <T> List<T> castList(Class<? extends T> clazz, Collection<?> c) {
+        List<T> r = new ArrayList<T>(c.size());
+        for (Object o : c) {
+            r.add(clazz.cast(o));
+        }
+        return r;
+    }
+
+    public void showTooltip(Stage owner, Control control, String tooltipText,
+            ImageView tooltipGraphic) {
+        Point2D p = control.localToScene(0.0, 0.0);
+
+        final Tooltip customTooltip = new Tooltip();
+        customTooltip.setText(tooltipText);
+
+        control.setTooltip(customTooltip);
+        customTooltip.setAutoHide(true);
+
+        customTooltip.show(owner, p.getX()
+                + control.getScene().getX() + control.getScene().getWindow().getX(), p.getY()
+                + control.getScene().getY() + control.getScene().getWindow().getY());
+
+    }
+
+    /**
+     * Enums are returned as strings in ObservableList.
+     * @param <E enum
+     * @param ens Array of enums
+     * @return ObservableList
+     */
+    public <E extends Enum<E>> ObservableList enumsToList(final E[] ens) {
+        final ObservableList list = FXCollections.observableArrayList();
+        for (E item : ens) {
+            list.add(item.toString());
+        }
+        return list;
+    }
 
 }

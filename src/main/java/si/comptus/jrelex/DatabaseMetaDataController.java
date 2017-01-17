@@ -1,27 +1,45 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package si.comptus.jrelex;
 
+import com.panemu.tiwulfx.common.TiwulFXUtil;
 import java.net.URL;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
 
+import javax.sql.DataSource;
+import javax.swing.JOptionPane;
+
 import javafx.application.Platform;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -36,12 +54,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.cell.CheckBoxTreeCell;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyEvent;
-
-import javax.sql.DataSource;
-import javax.swing.JOptionPane;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,751 +61,746 @@ import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.container.CColumn;
 import si.comptus.jrelex.container.CDatabase;
 import si.comptus.jrelex.container.CDatabaseStore;
-import si.comptus.jrelex.container.CReference;
 import si.comptus.jrelex.container.CTable;
 import si.comptus.jrelex.container.ConnBean;
 
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
-import java.util.logging.Level;
-import javafx.collections.FXCollections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import si.comptus.jrelex.configuration.RDBMSType;
+import si.comptus.jrelex.database.DatabaseMetaDataDAO;
 
+/**
+ * Controller for FXML template. It is used to set data needed for browsing the relational database.
+ *
+ * @author tomaz
+ */
 public class DatabaseMetaDataController implements Initializable {
 
-	@FXML
-	private ComboBox<String> cbDbms;
-	@FXML
-	private TextField txfName;
-	@FXML
-	private ComboBox<String> cbPort;
-	@FXML
-	private TextField txfHostname;
-	@FXML
-	private TextField txfUsername;
-	@FXML
-	private ComboBox<String> cbDatabase;
-	@FXML
-	private PasswordField pwfPassword;
-	@FXML
-	private TreeView trvDatabaseList;
-	@FXML
-	private Button btnSave;
+    /**
+     * Loggerd.
+     */
+    private static final Logger LOG = LoggerFactory.getLogger(DatabaseMetaDataController.class);
+    /**
+     * Form control. Combo box contains names for RDMS.
+     */
+    @FXML
+    private ComboBox<String> cbDbms;
+    /**
+     * Form control. The connection title.
+     */
+    @FXML
+    private TextField txfName;
+    /**
+     * Form control. Editable combo box to insert or chose port.
+     */
+    @FXML
+    private ComboBox<String> cbPort;
+    /**
+     * Form control. Server hostname.
+     */
+    @FXML
+    private TextField txfHostname;
+    /**
+     * Form control. Username.
+     */
+    @FXML
+    private TextField txfUsername;
+    /**
+     * Form control. Editable combo box for shemas.
+     */
+    @FXML
+    private ComboBox<String> cbDatabase;
+    /**
+     * Form control. User password.
+     */
+    @FXML
+    private PasswordField pwfPassword;
+    /**
+     * TreeView contains list of all saved databases, tables and columns. User can chose which
+     * database, table or column can be shown in relational browser.
+     */
+    @FXML
+    private TreeView trvDatabaseList;
+    /**
+     * It saves form connection data and database meta data to local file (dbmanagement.ser).
+     */
+    @FXML
+    private Button btnSave;
+    /**
+     * Container for form data.
+     */
+    private DatabaseConnDataVO connVO;
+    /**
+     * It shows progress while reading table meta data from database.
+     */
+    @FXML
+    private ProgressBar progressBar;
+    /**
+     * It shows progress data while reading table meta data.
+     */
+    @FXML
+    private TextArea txtProgress;
+    /**
+     * TextField to filter databases in TreeView.
+     */
+    @FXML
+    private TextField txtDBFilter;
+    /**
+     * TextField to filter tables in TreeView.
+     */
+    @FXML
+    private TextField txtTBLFilter;
+    /**
+     * Label shows error if user forgets to choose RDMS in ComboBox.
+     */
+    @FXML
+    private Label lblDbms;
+    /**
+     * Label shows error if user forgets to type name for connection.
+     */
+    @FXML
+    private Label lblName;
+    /**
+     * Label shows error if user forgets to type hostname for connection.
+     */
+    @FXML
+    private Label lblHostname;
+    /**
+     * Label shows error if user forgets to choose port.
+     */
+    @FXML
+    private Label lblPort;
+    /**
+     * Label shows error if user forgets to type username.
+     */
+    @FXML
+    private Label lblUsername;
+    /**
+     * Label shows error if user forgets to type or choose shema name.
+     */
+    @FXML
+    private Label lblDatabase;
 
-        private DatabaseConnDataVO connVO;
-	
-	@FXML
-	private ProgressBar progressBar;
-	@FXML
-	private TextArea txtProgress;
-	
-	@FXML
-	private Button btnSaveSelection;
-	@FXML
-	private Button btnRevertSelection;
-	
-	@FXML
-	private TextField txtDatabaseFilter;
-	@FXML
-	private TextField txtTableFilter;
-	
-	public String DBFilterValue="";
-	public String TBLFilterValue="";
-	
-	/*
-	 * labels for error reporting
-	 */
-	public Label lblDbms;
-	public Label lblName;
-	public Label lblHostname;
-	public Label lblPort;
-	public Label lblUsername;
-	public Label lblPassword;
-	public Label lblDatabase;
-	
-	private HashMap<String, Image> imageHash;
-		
-	private static final Logger log = LoggerFactory.getLogger(DatabaseMetaDataController.class);
-	
+    /**
+     * String.
+     */
+    private static final String STR_DATABASES = "Databases";
 
-	/**
-	 * Initializes the controller class.
-	 */
-	public void initialize(URL url, ResourceBundle rb) {
-		connVO = new DatabaseConnDataVO();
-		refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
-		trvDatabaseList.getSelectionModel().setSelectionMode(
-				SelectionMode.SINGLE);
-		 
-		trvDatabaseList.setCellFactory(CheckBoxTreeCell.<String>forTreeView());
-		
-		trvDatabaseList.setEditable(true);
-		trvDatabaseList.getSelectionModel().selectedItemProperty()
-				.addListener(new ChangeListener<Object>() {
+    /**
+     * Contructor.
+     */
+    public DatabaseMetaDataController() {
+    }
 
-					public void changed(ObservableValue<?> ov, Object t, Object t1) {
-						TreeItem<?> treeItem = (TreeItem<?>) t1;
-						if (treeItem != null) {
-							if (treeItem.getParent() != null) {
-								if (treeItem.getParent().getValue() == "Databases") {
-									String itemValue = (String) treeItem
-											.getValue();
-									// we get index of saved database									
-									String[] values = itemValue
-											.split(" \\(");
-									fillDatabaseManageForm(values[1].replace(")", ""));
-								}
-							}
-						}
-					}
-				});
-		
-		cbDatabase.valueProperty().addListener(new ChangeListener<String>() {
+    /**
+     * Initializes the controller class.
+     *
+     * @param url URL
+     * @param rb ResourceBundle
+     */
+    @Override
+    public final void initialize(final URL url, final ResourceBundle rb) {
 
-			@Override
-			public void changed(ObservableValue<? extends String> arg0,
-					String arg1, String arg2) {
-				
-				
-			}
-		});
-	}
-        
-        public void saveSelection() {
-            CDatabaseStore dbStore = Common.getInstance().getDbstore();
-            Common.getInstance().saveSerializedDBMetaDataToDisk(dbStore);
-        }
-        
-        public void revertSelection() {
-            Common.getInstance().setDbstore();
-            refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
-        }
-        
-        public void reloadDatabaseList(){
-            List<String> dbList = new ArrayList<>();
-            connVO = this.extractDataFromForm(connVO);
-            
-            DatabaseInteraction dbInteraction = Common.getInstance()
-				.getDatabaseInteraction();
+        this.cbDbms.setItems(Common.getInstance().enumsToList(RDBMSType.values()));
 
-            try {
-                dbList = dbInteraction.getDatabaseList(connVO);
-            } catch (Exception ex) {
-                log.error("Error while connecting to database", ex);
-            }
-            
-            cbDatabase.setItems(FXCollections.observableList(dbList));
-            cbDatabase.show();
-        }
+        this.refreshTreeViewDatabaseList(
+                Common.getInstance().getDbstore().getDatabases()
+        );
+        this.trvDatabaseList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
 
-	public void newConnection() {
-		
-		cbDbms.setValue("");
-		txfName.setText("");
-		txfHostname.setText("");
-		cbPort.setValue("0000");
-		txfUsername.setText("");
-		cbDatabase.setValue("");
-		pwfPassword.setText("");
-		
-	}
-	
-	public void saveConnection() {
+        this.trvDatabaseList.setCellFactory(CheckBoxTreeCell.<String>forTreeView());
 
-		if (isFormValid()) {
-			//if (false) {
-			//log.info("form is valid");
-			
-			
-			Connection conn = null;
-			try {
-				conn = connectToDatabase(connVO);
-			} catch (Exception e) {
-				log.error("Error while connecting to database", e);
-				MessageDialogBuilder.error(e).show(null);
-				return;
-			}
-			
-			final Connection connection = conn;
-                        
-                        //readAndSaveDBMetaData(connVO, connection);
-			// crate tread
-			Task<Void> task = new Task<Void>(){
-                            @Override
-                            public Void call() throws Exception  {
-                                btnSave.setDisable(true);
-                                try {
-                                    readAndSaveDBMetaData(connVO, connection);
-                                } catch (final Exception e) {						
-                                    Platform.runLater(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            log.error("Error while saving database meta data!", e);
-                                            MessageDialogBuilder.error(e).show(null);
-                                        }
-                                    });
-                                }
-                                btnSave.setDisable(false);
-                                return null;                
-                            }
-                            
-                            @Override
-                            protected void succeeded(){
-                                super.succeeded();
-                                refreshTreeViewDatabaseList(Common.getInstance()
-                                    .getDbstore().getDatabases());
-                            }
-                        };
-                    Thread th = new Thread(task);
-                    th.setDaemon(true);
-                    th.start();
-		}
-	}
-	
-	private boolean isFormValid(){
-            if(this.validateForm()){
-                this.extractDataFromForm(connVO);
-                return true;
-            }
-            return false;
-	}
-        
-        private boolean validateForm(){
-            FormValidator.getInstance().setFormValid(true);
-            FormValidator.getInstance().isTextEmpty(cbDbms.getValue(), lblDbms, "DBMS is empty!");
-            FormValidator.getInstance().isTextEmpty(txfName.getText(), lblName, "Name is empty!");
-            FormValidator.getInstance().isTextEmpty(txfHostname.getText(), lblHostname, "Hostname is empty!");
-            if(cbPort.getValue() == null){
-                    FormValidator.getInstance().isTextEmpty(cbPort.getEditor().getText(), lblPort, "Port is empty!");
-                    FormValidator.getInstance().isAllowedLength(cbPort.getEditor().getText(), 4, lblPort, "Only 4 numbers are allowed!");
-                    FormValidator.getInstance().isNumeric(cbPort.getEditor().getText(), lblPort, "Only numbers are allowed!");
-            } else {
-                    FormValidator.getInstance().isTextEmpty(cbPort.getValue(), lblPort, "Port is empty!");
-                    FormValidator.getInstance().isAllowedLength(cbPort.getValue(), 4, lblPort, "Only 4 numbers are allowed!");
-                    FormValidator.getInstance().isNumeric(cbPort.getValue(), lblPort, "Only numbers are allowed!");
-            }
-            FormValidator.getInstance().isTextEmpty(txfUsername.getText(), lblUsername, "Username is empty!");
-            //FormValidator.getInstance().isTextEmpty(pwfPassword.getText(), lblPassword, "Password is empty!");
-            if(cbDatabase.getValue() == null){
-                FormValidator.getInstance().isTextEmpty(
-                        cbDatabase.getEditor().getText(),
-                        lblDatabase, 
-                        "Database is empty!");
-            } else {
-                FormValidator.getInstance().isTextEmpty(
-                        cbDatabase.getValue(), 
-                        lblDatabase, 
-                        "Database is empty!"
-                );
-            }                
-            return FormValidator.getInstance().isFormValid();
-        }
-        
-        private DatabaseConnDataVO extractDataFromForm(DatabaseConnDataVO vo){
-            vo.setDriver(cbDbms.getValue());
-            vo.setName(txfName.getText());
-            vo.setHostname(txfHostname.getText());
-            if(cbPort.getValue() == null){
-                vo.setPort(Integer.parseInt(cbPort.getEditor().getText()));
-            } else {
-                vo.setPort(Integer.parseInt(cbPort.getValue()));
-            }
-            vo.setUsername(txfUsername.getText());
-            vo.setPassword(pwfPassword.getText());
-            if(cbDatabase.getValue() == null){
-                vo.setDatabase(cbDatabase.getEditor().getText());
-            } else {
-                vo.setDatabase(cbDatabase.getValue());
-            }
-            return vo;
-        }
+        this.trvDatabaseList.setEditable(true);
 
-	public void deleteConnection() {
-		Common.getInstance().getDbstore().getDatabases().remove(connVO.getName());
-		Common.getInstance().saveSerializedDBMetaDataToDisk(Common.getInstance().getDbstore());
-		newConnection();
-		refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
-	}
-
-	public void fillDatabaseManageForm(String storedDatabaseId) {
-		CDatabase database = Common.getInstance().getDbstore().getDatabases()
-				.get(storedDatabaseId);
-
-		ConnBean connBean = database.getConnBean();
-		
-		cbDbms.setValue(connBean.getDriver());
-		txfName.setText(connBean.getName());
-		txfHostname.setText(connBean.getHostname());
-		cbPort.setValue(String.valueOf(connBean.getPort()));
-		txfUsername.setText(connBean.getUsername());
-		pwfPassword.setText(connBean.getPassword());
-		cbDatabase.setValue(connBean.getDatabase());
-		
-		connVO.setDriver(connBean.getDriver());
-		connVO.setName(connBean.getName());
-		connVO.setHostname(connBean.getHostname());
-		connVO.setPort(connBean.getPort());
-		connVO.setUsername(connBean.getUsername());
-		connVO.setPassword(connBean.getPassword());
-		connVO.setDatabase(connBean.getDatabase());
-
-	}
-
-	private void refreshTreeViewDatabaseList(
-			HashMap<String, CDatabase> databases) {
-		
-		CheckBoxTreeItem<String> rootItem = new CheckBoxTreeItem<>("Databases");
-
-		Map<String, CDatabase> sortedDatabases = new TreeMap<>(databases);
-		
-		Iterator<Map.Entry<String, CDatabase>> iterator = sortedDatabases.entrySet().iterator();
-		/*
-		imageHash = new HashMap<>();
-		imageHash.put("database", new Image(getClass().getResourceAsStream("/images/database.png")));
-		imageHash.put("table", new Image(getClass().getResourceAsStream("/images/bsmall_sbrowse.png")));
-		imageHash.put("column", new Image(getClass().getResourceAsStream("/images/column.png")));
-		*/
-		while (iterator.hasNext()) {
-			Map.Entry<String, CDatabase> pairs = (Map.Entry<String, CDatabase>)iterator.next();
-
-			CDatabase storedDatabase = (CDatabase) pairs.getValue();
-			
-			String databaseName = storedDatabase.getName();
-			
-			if(this.filterName(databaseName, this.DBFilterValue)){
-				continue;
-			}
-			
-			CheckBoxTreeItem<String> databaseItem = new CheckBoxTreeItem<>(databaseName 
-					+ " (" + pairs.getKey() + ")");
-			
-			//databaseItem.setGraphic(new Text("Hello"));
-			
-			
-			databaseItem.setSelected(storedDatabase.isVisible());
-			
-			databaseItem.selectedProperty().addListener(new InvalidationListener() {
-				
-				@Override
-				public void invalidated(Observable o) {					
-					BooleanProperty property = (BooleanProperty)o;
-					
-					@SuppressWarnings("unchecked")
-					TreeItem<String> item = (TreeItem<String>) property.getBean();
-					String itemName = item.getValue();
-					String[] splitedItemName = itemName.split(" \\(");
-					String storedDatabase = splitedItemName[1].replace(")", "");
-					Common.getInstance().getDbstore()
-						.getDatabases().get(storedDatabase).setVisible(property.getValue());
-				
-				}
-			});
-			
-			// databaseItem.checkBoxSelectionChangedEvent();
-
-			Map<String, CTable> tables = storedDatabase.getTables();
-			
-			if (tables != null) {
-				
-				Map<String, CTable> sortedTables = new TreeMap<>(tables);
-				Iterator<Map.Entry<String, CTable>> iterator2 = sortedTables.entrySet().iterator();
-				while (iterator2.hasNext()) {
-										
-					Map.Entry<String, CTable> pairs2 = (Map.Entry<String, CTable>)iterator2.next();
-					 
-					CTable table = pairs2.getValue();
-					
-					String tableName = pairs2.getKey();
-					
-					if(this.filterName(tableName, this.TBLFilterValue)){
-						continue;
-					}
-					
-					//ImageView imgViewTable = new ImageView(imageHash.get("table"));
-					CheckBoxTreeItem<String> tableItem = new CheckBoxTreeItem<String>(databaseName 
-							+ "." + tableName);
-					
-					//tableItem.setGraphic(imgViewTable);
-					tableItem.setSelected(table.isVisible());
-					
-					tableItem.selectedProperty().addListener(new InvalidationListener() {
-						
-						@Override
-						public void invalidated(Observable o) {
-							BooleanProperty property = (BooleanProperty)o;
-							
-							@SuppressWarnings("unchecked")
-							TreeItem<String> item = (TreeItem<String>) property.getBean();
-							String table = item.getValue().toString();
-							String[] splitedTableName = table.split("\\.");
-							String tableName = splitedTableName[1];
-							
-							TreeItem<String> itemParent = (TreeItem<String>) item.getParent();
-							
-							String itemParentName = itemParent.getValue().toString();
-							
-							String[] splitedItemParentName = itemParentName.split(" \\(");
-							String storedDatabase = splitedItemParentName[1].replace(")", "");
-							
-							Common.getInstance().getDbstore()
-								.getDatabases().get(storedDatabase).getTables()
-								.get(tableName).setVisible(property.getValue());
-							 
-						}
-					});
-					
-					List<CColumn> columns = table.getColumns();
-					if(columns != null){
-						
-						for(CColumn column : columns){
-							//ImageView imgViewColumn = new ImageView(imageHash.get("column"));
-							CheckBoxTreeItem<String> columnItem = new CheckBoxTreeItem<String>(column.getName());
-							
-							columnItem.setSelected(column.isVisible());
-							
-							columnItem.selectedProperty().addListener(new InvalidationListener() {
-								
-								@Override
-								public void invalidated(Observable o) {
-									BooleanProperty property = (BooleanProperty)o;
-									@SuppressWarnings("unchecked")
-									TreeItem<String> item = (TreeItem<String>) property.getBean();
-									String columnName = item.getValue().toString();
-									
-									TreeItem<String> itemParent = (TreeItem<String>) item.getParent();
-									String table = itemParent.getValue().toString();
-									String[] splitedTableName = table.split("\\.");
-									String tableName = splitedTableName[1];
-									
-									String itemParentParentName = itemParent.getParent().getValue().toString();
-									String[] spliteditemParentParentName = itemParentParentName.split(" \\(");
-									String storedDatabase = spliteditemParentParentName[1].replace(")", "");
-									
-									Common.getInstance().getDbstore()
-										.getDatabases().get(storedDatabase).getTables()
-										.get(tableName).getColumnByName(columnName).setVisible(property.getValue());
-								}
-							});
-							
-							tableItem.getChildren().add(columnItem);
-							
-						}
-					}
-									
-					databaseItem.getChildren().add(tableItem);
-				}
-			}
-			
-			rootItem.getChildren().add(databaseItem);
-		}
-		rootItem.setExpanded(true);
-		trvDatabaseList.setRoot(rootItem);
-		trvDatabaseList.setShowRoot(false);
-		
-
-	}
-	
-	private Connection connectToDatabase(DatabaseConnDataVO vo) throws Exception{
-		DataSource ds = null;
-		Connection connection = null;
-			
-		DatabaseInteraction dbInteraction = Common.getInstance()
-				.getDatabaseInteraction();
-
-		ds = dbInteraction.getDataSource(
-				vo.getDriver(), 
-				vo.getHostname(),
-				vo.getPort(), 
-				vo.getUsername(), 
-				vo.getPassword(),
-				vo.getDatabase()
-				);
-		
-		connection = ds.getConnection();
-		
-		return connection;
-	}
-	
-	/**
-	 * Reads meta data from database, stores it to disk and returns it
-	 * 
-	 * @param bean
-	 * @throws Exception 
-	 */
-	public void readAndSaveDBMetaData(DatabaseConnDataVO vo, Connection connection) {
-
-		// we add informations on connection
-		ConnBean bean = new ConnBean();
-		bean.setDriver(vo.getDriver());
-		bean.setName(vo.getName());
-		bean.setHostname(vo.getHostname());
-		bean.setPort(vo.getPort());
-		bean.setUsername(vo.getUsername());
-		bean.setPassword(vo.getPassword());
-		bean.setDatabase(vo.getDatabase());
-		
-		// Collect meta data from database
-		CDatabase metaData = this.readDBMetaData(bean, connection);
-		metaData.setConnBean(bean);
-
-		Common.getInstance().setDbstore();
-		
-		
-		Common.getInstance().getDbstore().getDatabases()
-				.put(bean.getName(), metaData);
-		
-		// Save meta data in to file
-		if (Common.getInstance().saveSerializedDBMetaDataToDisk(
-				Common.getInstance().getDbstore())) 
-		{
-			JOptionPane.showMessageDialog(null, "Sucsesss :) !!!");
-		}
-	}
-		
-	private CDatabase readDBMetaData(ConnBean bean, Connection connection){
-		
-		CDatabase dbcontainer = new CDatabase();
-		try {
-			
-                    dbcontainer.setName(bean.getDatabase());
-
-                    DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-                    String[] types = { "TABLE" };
-                    ResultSet resultSetTables = databaseMetaData.getTables(connection.getCatalog(), null, null, types);
-                    try {                   
-
-                        ArrayList<CReference> tempReferences = new ArrayList<CReference>();
-
-                        // count tables
-                        int tableCount=0;
-                        while(resultSetTables.next()) {
-                            // we check if user has access. MSSQL has always dbo.
-                            String TABLE_SCHEM = resultSetTables.getString(2);
-                            if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
-                                    if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
-                                            continue;
-                                    }
-                            }		
-
-                            //we check if is table
-                            String TYPE = resultSetTables.getString(4);
-                            if(!TYPE.equals("TABLE")){
-                                    continue;
-                            }
-                            
-                            if(bean.getDriver().equals("ORACLE")){
-                                if(resultSetTables.getString(3).startsWith("BIN")){ // Tables that begin on BIN are omited
-                                    continue;
-                                }
-                            }
-                            
-                            tableCount++;
+        this.trvDatabaseList.getSelectionModel().selectedItemProperty()
+                .addListener((ChangeListener<Object>) (ObservableValue<?> ov, Object t, Object t1) -> {
+                    final TreeItem<?> treeItem = (TreeItem<?>) t1;
+                    if (treeItem != null
+                    && treeItem.getParent() != null
+                    && STR_DATABASES.equals(treeItem.getParent().getValue())) {
+                        // get database index with regex
+                        final String connectionString = (String) treeItem.getValue();
+                        final Pattern pattern = Pattern.compile("\\(.*.\\)");
+                        final Matcher matcher = pattern.matcher(connectionString);
+                        if (matcher.find()) {
+                            String databaseIndex = matcher.group();
+                            databaseIndex = databaseIndex.replaceAll("[\\(\\)]", "");
+                            this.fillDatabaseManageForm(databaseIndex);
                         }
-
-                        if(bean.getDriver().equals("MSSQL")) {// does not iterate the cursor
-                            resultSetTables = databaseMetaData.getTables(connection.getCatalog(), null, null, types);
-                        } else if(bean.getDriver().equals("ORACLE")){
-                            resultSetTables = databaseMetaData.getTables(connection.getCatalog(), connection.getSchema(), null, types);
-                        } else {
-                            resultSetTables.beforeFirst();
-                        }
-
-                        // TABLES
-                        dbcontainer.setTables(new HashMap<String, CTable>(tableCount));
-                        int ix = 1;
-                        txtProgress.setText("");
-                        while(resultSetTables.next()) {
-
-                            // we check if user has access
-                            String TABLE_SCHEM = resultSetTables.getString(2);
-                            if(TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")){
-                                    if(!TABLE_SCHEM.equalsIgnoreCase(bean.getUsername())){
-                                            continue;
-                                    }
-                            }
-
-                            //we check if is table
-                            String TYPE = resultSetTables.getString(4);
-                            if(!TYPE.equals("TABLE")){
-                                
-                                    continue;
-                            }
-
-                            String tableName = resultSetTables.getString(3); // get table name
-                            if(bean.getDriver().equals("ORACLE")){
-                                if(tableName.startsWith("BIN")){
-                                    continue;
-                                }
-                            }
-                            //log.info(ix+". Obdelujem tabelo "+tableName);
-                            txtProgress.setText(txtProgress.getText()+"Reading table: "+tableName+" - "+ix+" of "+tableCount+"\n");
-                            txtProgress.setScrollTop(Double.MAX_VALUE);
-                            float progress = (float)ix / (float)tableCount;
-                            progressBar.setProgress(progress);
-                            ix++;
-
-                            CTable ctable = new CTable();
-                            ctable.setName(tableName);
-
-                            // COLUMNS
-                            ResultSet resultSetColumns = null;
-                            int initialSize=0;
-                            try  {
-                                resultSetColumns = databaseMetaData.getColumns(
-                                            connection.getCatalog(), 
-                                            connection.getSchema(), tableName, null);
-                                // get initial size for columns
-                                while(resultSetColumns.next()){
-                                        initialSize++;
-                                }
-                            }finally{
-                                resultSetColumns.close();
-                            }
-                            
-                            try {
-
-                                // COLUMNS
-                                /*if(bean.getDriver().equals("MSSQL") ||
-                                        bean.getDriver().equals("ORACLE")) {*/
-                                resultSetColumns = databaseMetaData.getColumns(
-                                                connection.getCatalog(), 
-                                                connection.getSchema(), tableName, null);
-                                /*} else {
-                                        resultSetColumns.beforeFirst();
-                                }*/
-                                /*
-                                resultSetColumns = databaseMetaData.getColumns(
-                                                connection.getCatalog(), 
-                                                null, tableName, null);
-                                */
-                                ctable.setColumns(new ArrayList<CColumn>(initialSize));
-                                ctable.setColumnNames(new ArrayList<String>(initialSize));
-
-                                while(resultSetColumns.next()){
-                                        CColumn ccolumn = new CColumn();
-
-                                        ccolumn.setName(resultSetColumns.getString(4)); // column name
-                                        Integer type = resultSetColumns.getInt(5);
-                                        ccolumn.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column type
-
-                                        ctable.getColumns().add(ccolumn);
-                                        ctable.getColumnNames().add(ccolumn.getName());
-
-                                }
-                            }finally{
-                                resultSetColumns.close();
-                            }
-                                
-                            //Collections.reverse(ctable.getColumnNames());
-
-                            // we add primary key info
-                            ResultSet resultSetPrimaryKeys = databaseMetaData
-                                            .getPrimaryKeys(connection.getCatalog(), null, tableName);
-                            try {
-                                while (resultSetPrimaryKeys.next()){
-                                        String columnName = resultSetPrimaryKeys.getString(4);
-                                        ctable.getColumnByName(columnName).setPrimaryKey(true);
-                                }
-                            } finally {
-                                resultSetPrimaryKeys.close();
-                            }
-                            //String catalog = connection.getCatalog();
-
-                            ResultSet resultExportedKeys = databaseMetaData
-                                            .getExportedKeys(connection.getCatalog(), null, tableName);
-                            try {
-                                while(resultExportedKeys.next()){
-                                        String pKColumnName = resultExportedKeys.getString(4);
-
-                                        CReference creference = new CReference();
-                                        creference.setTable(resultExportedKeys.getString(3)); // pktable_name
-                                        creference.setColumn(pKColumnName); // pkcolum_name
-                                        creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
-                                        creference.setReferencedColumn(resultExportedKeys.getString(8)); // fkcolum_name
-
-                                        tempReferences.add(creference);
-
-                                        //ctable.getColumnByName(pKColumnName).setForeignKey(true);
-
-                                        if(ctable.getColumnByName(pKColumnName).getReferences() == null){
-                                                ctable.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
-                                        }
-                                        ctable.getColumnByName(pKColumnName).getReferences().add(creference);
-                                }
-                            } finally {
-                                resultExportedKeys.close();
-                            }
-
-
-                            ResultSet resultImportedKeys = databaseMetaData
-                                            .getImportedKeys(connection.getCatalog(), null, tableName);
-                            try {
-                                while(resultImportedKeys.next()){
-                                    String pKColumnName = resultImportedKeys.getString(4);
-                                    String fKColumnName = resultImportedKeys.getString(8);
-
-                                    CReference creference = new CReference();
-                                    creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
-                                    creference.setReferencedColumn(pKColumnName); // pkcolum_name
-                                    creference.setTable(resultImportedKeys.getString(7)); // fktable_name
-                                    creference.setColumn(fKColumnName); // fkcolum_name
-
-                                    tempReferences.add(creference);
-
-                                    ctable.getColumnByName(fKColumnName).setForeignKey(true);
-
-                                    if(ctable.getColumnByName(fKColumnName).getReferences() == null){
-                                            ctable.getColumnByName(fKColumnName).setReferences(new ArrayList<CReference>());
-                                    }
-                                    ctable.getColumnByName(fKColumnName).getReferences().add(creference);
-                            }
-                            }finally {
-                                resultImportedKeys.close();
-                            }
-
-                            dbcontainer.getTables().put(ctable.getName(), ctable);	
-
-                        }
-                    }finally{
-                        resultSetTables.close();
                     }
-			
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			txtProgress.setText(txtProgress.getText()+"Error while reading meta data!"+"\n"+e.getMessage());
-			txtProgress.setScrollTop(Double.MAX_VALUE);
-			log.error("Error while reading meta data!", e);
-		}
-		
-		return dbcontainer;
-	}
-	
-	public void filterDatabasesFromTreeView(KeyEvent event){
-		TextField tf = (TextField)event.getSource();
-		this.DBFilterValue = tf.getText();
-		this.refreshTreeViewDatabaseList(Common.getInstance()
-				.getDbstore().getDatabases());
-	}
-	
-	public void filterTablesFromTreeView(KeyEvent event){
-		TextField tf = (TextField)event.getSource();
-		this.TBLFilterValue = tf.getText();
-		this.refreshTreeViewDatabaseList(Common.getInstance()
-				.getDbstore().getDatabases());
-	}
-	
-	private boolean filterName(String name, String typedFilter){
-		
-		if(typedFilter.equals("")){
-			return false;
-		}
-		
-		name = name.toLowerCase();
-		typedFilter = typedFilter.toLowerCase();
-		
-		if(name.startsWith(typedFilter)){
-			return false;
-		}
-		return true;
-	}
+                });
+    }
+
+    /**
+     * Saving selection in database treeview.
+     */
+    public final void saveSelection() {
+        final CDatabaseStore dbStore = Common.getInstance().getDbstore();
+        Common.getInstance().saveSerializedDBMetaDataToDisk(dbStore);
+    }
+
+    /**
+     * User can revert selection before saving.
+     */
+    public final void revertSelection() {
+        Common.getInstance().setDbstore();
+        this.refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
+    }
+
+    /**
+     * Database from UI form gets loaded.
+     */
+    public final void reloadDatabaseList() {
+        List<String> dbList = new ArrayList<>();
+        this.connVO = this.extractDataFromForm(new DatabaseConnDataVO());
+
+        try {
+            dbList = Common.getInstance().getDatabaseInteraction().getDatabaseList(this.connVO);
+        } catch (SQLException ex) {
+            LOG.error(TiwulFXUtil.getLiteral("error.connection"), ex);
+            MessageDialogBuilder.error(ex).show(null);
+        }
+
+        this.cbDatabase.setItems(FXCollections.observableList(dbList));
+        this.cbDatabase.show();
+    }
+
+    /**
+     * Default form data.
+     */
+    public final void newConnection() {
+        this.cbDbms.setValue("");
+        this.txfName.setText("");
+        this.txfHostname.setText("");
+        this.cbPort.setValue("0000");
+        this.txfUsername.setText("");
+        this.cbDatabase.setValue("");
+        this.pwfPassword.setText("");
+
+    }
+
+    /**
+     * Collects data and saves connection.
+     */
+    public final void saveConnection() {
+
+        if (this.isFormValid()) {
+
+            Connection connection = null;
+            try {
+                connection = this.connectToDatabase(this.connVO);
+            } catch (SQLException e) {
+                LOG.error(TiwulFXUtil.getLiteral("error.connection"), e);
+                MessageDialogBuilder.error(e).show(null);
+                return;
+            }
+
+            // crate tread
+            final DatabaseMetaDataController.DatabaseMetaDataTask task
+                    = new DatabaseMetaDataTask(connection);
+
+            final Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
+    }
+
+    /**
+     * Checks if form data is valid.
+     *
+     * @return boolean
+     */
+    private boolean isFormValid() {
+        if (this.validateForm()) {
+            this.extractDataFromForm(this.connVO);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Checks form data.
+     *
+     * @return tag
+     */
+    private boolean validateForm() {
+        FormValidator.getInstance().setFormValid(true);
+        FormValidator.getInstance().isTextEmpty(
+                this.cbDbms.getValue(), this.lblDbms,
+                TiwulFXUtil.getLiteral("formValidatorMessage.empty.rdbms")
+        );
+        FormValidator.getInstance().isTextEmpty(
+                this.txfName.getText(), this.lblName,
+                TiwulFXUtil.getLiteral("formValidatorMessage.empty.name")
+        );
+        FormValidator.getInstance().isTextEmpty(
+                this.txfHostname.getText(), this.lblHostname,
+                TiwulFXUtil.getLiteral("formValidatorMessage.empty.hostname")
+        );
+        if (this.cbPort.getValue() == null) {
+            FormValidator.getInstance().isTextEmpty(
+                    this.cbPort.getEditor().getText(), this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.empty.port")
+            );
+            FormValidator.getInstance().isAllowedLength(
+                    this.cbPort.getEditor().getText(), 4, this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.size.port")
+            );
+            FormValidator.getInstance().isNumeric(
+                    this.cbPort.getEditor().getText(), this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.numeric.port")
+            );
+        } else {
+            FormValidator.getInstance().isTextEmpty(
+                    this.cbPort.getValue(), this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.empty.port")
+            );
+            FormValidator.getInstance().isAllowedLength(
+                    this.cbPort.getValue(), 4, this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.size.port")
+            );
+            FormValidator.getInstance().isNumeric(
+                    this.cbPort.getValue(), this.lblPort,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.numeric.port")
+            );
+        }
+        FormValidator.getInstance().isTextEmpty(
+                this.txfUsername.getText(), this.lblUsername,
+                TiwulFXUtil.getLiteral("formValidatorMessage.empty.username")
+        );
+        //FormValidator.getInstance().isTextEmpty(pwfPassword.getText(), lblPassword, "Password is empty!");
+        if (this.cbDatabase.getValue() == null) {
+            FormValidator.getInstance().isTextEmpty(
+                    this.cbDatabase.getEditor().getText(),
+                    this.lblDatabase,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.empty.username"));
+        } else {
+            FormValidator.getInstance().isTextEmpty(
+                    this.cbDatabase.getValue(),
+                    this.lblDatabase,
+                    TiwulFXUtil.getLiteral("formValidatorMessage.empty.database")
+            );
+        }
+        return FormValidator.getInstance().isFormValid();
+    }
+
+    /**
+     * Gets data from form.
+     *
+     * @param vo DatabaseConnDataVO
+     * @return DatabaseConnDataVO
+     */
+    private DatabaseConnDataVO extractDataFromForm(final DatabaseConnDataVO vo) {
+        vo.setDriver(this.cbDbms.getValue());
+        vo.setName(this.txfName.getText());
+        vo.setHostname(this.txfHostname.getText());
+        if (this.cbPort.getValue() == null) {
+            vo.setPort(Integer.parseInt(this.cbPort.getEditor().getText()));
+        } else {
+            vo.setPort(Integer.parseInt(this.cbPort.getValue()));
+        }
+        vo.setUsername(this.txfUsername.getText());
+        vo.setPassword(this.pwfPassword.getText());
+        if (this.cbDatabase.getValue() == null) {
+            vo.setDatabase(this.cbDatabase.getEditor().getText());
+        } else {
+            vo.setDatabase(this.cbDatabase.getValue());
+        }
+        return vo;
+    }
+
+    /**
+     * Deletes database meta data.
+     */
+    public final void deleteConnection() {
+        Common.getInstance().getDbstore().getDatabases().remove(
+                this.connVO.getName()
+        );
+        Common.getInstance().saveSerializedDBMetaDataToDisk(
+                Common.getInstance().getDbstore()
+        );
+        this.newConnection();
+        this.refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
+    }
+
+    /**
+     * Method is inserting data to UI form.
+     *
+     * @param storedDatabaseId String
+     */
+    public final void fillDatabaseManageForm(final String storedDatabaseId) {
+        final CDatabase database = Common.getInstance()
+                .getDbstore().getDatabases().get(storedDatabaseId);
+
+        final ConnBean connBean = database.getConnBean();
+
+        this.cbDbms.setValue(connBean.getDriver().toString());
+        this.txfName.setText(connBean.getName());
+        this.txfHostname.setText(connBean.getHostname());
+        this.cbPort.setValue(String.valueOf(connBean.getPort()));
+        this.txfUsername.setText(connBean.getUsername());
+        this.pwfPassword.setText(connBean.getPassword());
+        this.cbDatabase.setValue(connBean.getDatabase());
+
+        this.connVO.setDriver(connBean.getDriver().toString());
+        this.connVO.setName(connBean.getName());
+        this.connVO.setHostname(connBean.getHostname());
+        this.connVO.setPort(connBean.getPort());
+        this.connVO.setUsername(connBean.getUsername());
+        this.connVO.setPassword(connBean.getPassword());
+        this.connVO.setDatabase(connBean.getDatabase());
+
+    }
+
+    /**
+     * TreeView node.
+     * @param name connection id
+     * @param value database name
+     * @param check to check
+     * @return CheckBoxTreeItem
+     */
+    private CheckBoxTreeItem<String> getDatabaseTreeViewItem(
+            final String name, final String value, final boolean check) {
+        final CheckBoxTreeItem<String> tviDatabase = new CheckBoxTreeItem<>(
+                name + " (" + value + ")"
+        );
+
+        tviDatabase.setSelected(check);
+        tviDatabase.selectedProperty().addListener((Observable o) -> {
+            final BooleanProperty property = (BooleanProperty) o;
+            final TreeItem<String> item = (TreeItem<String>) property.getBean();
+            final String itemName = item.getValue();
+            final String[] splitedItemName = itemName.split(" \\(");
+            final String storedDatabaseID = splitedItemName[1].replace(")", "");
+            Common.getInstance().getDbstore()
+                    .getDatabases().get(storedDatabaseID).setVisible(property.getValue());
+        }
+        );
+
+        return tviDatabase;
+    }
+
+    /**
+     * TreeView node.
+     * @param databaseName database name
+     * @param name table name
+     * @param check to check
+     * @return CheckBoxTreeItem
+     */
+    private CheckBoxTreeItem<String> getTableTreeViewItem(
+            final String databaseName, final String name, final boolean check) {
+
+        final CheckBoxTreeItem<String> tviTable = new CheckBoxTreeItem<>(
+                databaseName + "." + name);
+
+        //tableItem.setGraphic(imgViewTable);
+        tviTable.setSelected(check);
+
+        tviTable.selectedProperty().addListener((Observable o) -> {
+            final BooleanProperty property = (BooleanProperty) o;
+
+            final TreeItem<String> item = (TreeItem<String>) property.getBean();
+            final String[] splitedTableName = item.getValue().split("\\.");
+            final String stableName = splitedTableName[1];
+
+            final TreeItem<String> itemParent = (TreeItem<String>) item.getParent();
+            final String[] splitedItemParentName = itemParent.getValue().split(" \\(");
+            final String storedDatabase = splitedItemParentName[1].replace(")", "");
+
+            Common.getInstance().getDbstore()
+                    .getDatabases().get(storedDatabase).getTables()
+                    .get(stableName).setVisible(property.getValue());
+
+        });
+
+        return tviTable;
+    }
+
+    /**
+     * TreeView node.
+     *
+     * @param column column name
+     * @param check checked
+     * @return CheckBoxTreeItem
+     */
+    private CheckBoxTreeItem<String> getColumnTreeViewItem(
+            final String column, final boolean check) {
+
+        final CheckBoxTreeItem<String> tviColumn = new CheckBoxTreeItem<>(column);
+
+        tviColumn.setSelected(check);
+
+        tviColumn.selectedProperty().addListener((Observable o) -> {
+            final BooleanProperty property = (BooleanProperty) o;
+
+            final TreeItem<String> item = (TreeItem<String>) property.getBean();
+            final String columnName = item.getValue();
+
+            final TreeItem<String> itemParent = (TreeItem<String>) item.getParent();
+            final String[] splitedTableName = itemParent.getValue().split("\\.");
+            final String tableName = splitedTableName[1];
+
+            final String itemParentParentName = itemParent.getParent().getValue();
+            final String[] spliteditemParentParentName = itemParentParentName.split(" \\(");
+            final String sstoredDatabase = spliteditemParentParentName[1].replace(")", "");
+
+            Common.getInstance().getDbstore()
+                    .getDatabases().get(sstoredDatabase).getTables()
+                    .get(tableName).getColumnByName(columnName).setVisible(property.getValue());
+        }
+        );
+
+        return tviColumn;
+    }
+
+    /**
+     * Refreshing database list in tree view.
+     *
+     * @param databases Saved database list.
+     */
+    private void refreshTreeViewDatabaseList(
+            final Map<String, CDatabase> databases) {
+
+        // tree view root
+        final CheckBoxTreeItem<String> tviRoot = new CheckBoxTreeItem<>(STR_DATABASES);
+
+        final Map<String, CDatabase> sortedDatabases = new TreeMap<>(databases);
+
+        final Iterator<Map.Entry<String, CDatabase>> databaseIterator = sortedDatabases
+                .entrySet().iterator();
+
+        while (databaseIterator.hasNext()) {
+            final Map.Entry<String, CDatabase> pairs
+                    = (Map.Entry<String, CDatabase>) databaseIterator.next();
+
+            final CDatabase storedDatabase = (CDatabase) pairs.getValue();
+
+            // filter for database name
+            if (this.filterName(storedDatabase.getName(), this.txtDBFilter.getText())) {
+                continue;
+            }
+
+            final CheckBoxTreeItem<String> tviDatabase = this.getDatabaseTreeViewItem(
+                    storedDatabase.getName(), pairs.getKey(), storedDatabase.isVisible());
+
+            // databaseItem.checkBoxSelectionChangedEvent();
+            final Map<String, CTable> tables = storedDatabase.getTables();
+            if (tables != null) {
+
+                final Map<String, CTable> sortedTables = new TreeMap<>(tables);
+                final Iterator<Map.Entry<String, CTable>> tableIterator
+                        = sortedTables.entrySet().iterator();
+
+                while (tableIterator.hasNext()) {
+
+                    final Map.Entry<String, CTable> pairs2
+                            = (Map.Entry<String, CTable>) tableIterator.next();
+
+                    final CTable table = pairs2.getValue();
+                    final String tableName = pairs2.getKey();
+
+                    // filter for table name
+                    if (this.filterName(tableName, this.txtTBLFilter.getText())) {
+                        continue;
+                    }
+
+                    final CheckBoxTreeItem<String> tviTable = this.getTableTreeViewItem(
+                            storedDatabase.getName(), tableName, table.isVisible());
+
+                    final List<CColumn> columns = table.getColumns();
+                    if (columns != null) {
+
+                        for (CColumn column : columns) {
+
+                            final CheckBoxTreeItem<String> tviColumn = this.getColumnTreeViewItem(
+                                    column.getName(), column.isVisible());
+
+                            tviTable.getChildren().add(tviColumn);
+
+                        }
+                    }
+                    tviDatabase.getChildren().add(tviTable);
+                }
+            }
+            tviRoot.getChildren().add(tviDatabase);
+        }
+        tviRoot.setExpanded(true);
+        this.trvDatabaseList.setRoot(tviRoot);
+        this.trvDatabaseList.setShowRoot(false);
+
+    }
+
+    /**
+     * Retrieves database connection. We need it to collect meta data from database.
+     *
+     * @param vo essential data for connection
+     * @return Connection
+     * @throws SQLException sql exception
+     */
+    private Connection connectToDatabase(final DatabaseConnDataVO vo) throws SQLException {
+        final DataSource ds = Common.getInstance()
+                .getDatabaseInteraction().getDataSource(
+                        RDBMSType.valueOf(vo.getDriver()),
+                        vo.getHostname(),
+                        vo.getPort(),
+                        vo.getUsername(),
+                        vo.getPassword(),
+                        vo.getDatabase()
+                );
+        final Connection connection = ds.getConnection();
+        return connection;
+    }
+
+    /**
+     * Reads meta data from database, stores it to disk and returns it.
+     *
+     * @param vo Contains essential data
+     * @param connection Connection to database
+     */
+    private void readAndSaveDBMetaData(final DatabaseConnDataVO vo, final Connection connection) {
+
+        // we add informations on connection
+        final ConnBean bean = new ConnBean();
+        bean.setDriver(RDBMSType.valueOf(vo.getDriver()));
+        bean.setName(vo.getName());
+        bean.setHostname(vo.getHostname());
+        bean.setPort(vo.getPort());
+        bean.setUsername(vo.getUsername());
+        bean.setPassword(vo.getPassword());
+        bean.setDatabase(vo.getDatabase());
+
+        // Collect meta data from database
+        final CDatabase metaData = this.readDBMetaData(bean, connection);
+        metaData.setConnBean(bean);
+
+        Common.getInstance().setDbstore();
+        Common.getInstance().getDbstore().getDatabases()
+                .put(bean.getName(), metaData);
+
+        // Save meta data in to file
+        if (Common.getInstance().saveSerializedDBMetaDataToDisk(
+                Common.getInstance().getDbstore())) {
+            JOptionPane.showMessageDialog(null, "Sucsesss :) !!!");
+        }
+    }
+
+    /**
+     * Reads meta data from database and fills CDatabase object.
+     *
+     * @param bean Contains essential data
+     * @param connection Connection to database
+     * @return CDatabase object
+     */
+    private CDatabase readDBMetaData(final ConnBean bean, final Connection connection) {
+
+        DatabaseMetaDataDAO metaDataDao = null;
+        try {
+            metaDataDao = new DatabaseMetaDataDAO(connection, bean);
+            metaDataDao.getDatabaseContainer().setName(bean.getDatabase());
+            try {
+                this.txtProgress.setText("");
+                while (metaDataDao.tableIteratorHasNext()) {
+                    final CTable table = metaDataDao.tableIteratorNext();
+
+                    // UI Progress bar.
+                    this.txtProgress.setText(this.txtProgress.getText()
+                            + "Reading table: " + table.getName()
+                            + " - " + metaDataDao.getCurrentTableIndex()
+                            + " of " + metaDataDao.getTableCount() + "\n"
+                    );
+                    this.txtProgress.setScrollTop(Double.MAX_VALUE);
+                    final float progress = (float) metaDataDao.getTableCount()
+                            / (float) metaDataDao.getTableCount();
+                    this.progressBar.setProgress(progress);
+                }
+            } finally {
+                metaDataDao.tableIteratorClose();
+            }
+
+        } catch (SQLException e) {
+            this.txtProgress.setText(this.txtProgress.getText()
+                    + "Error while reading meta data!" + "\n" + e.getMessage());
+            this.txtProgress.setScrollTop(Double.MAX_VALUE);
+            LOG.error("Error while reading meta data!", e);
+        }
+
+        if (metaDataDao != null) {
+            return metaDataDao.getDatabaseContainer();
+        }
+        return null;
+    }
+
+    /**
+     * Refresh database tree view in meta data view.
+     */
+    public final void refreshTreeViewDBList() {
+        this.refreshTreeViewDatabaseList(Common.getInstance()
+                .getDbstore().getDatabases());
+    }
+
+    /**
+     * It filters the names starting with the user entered string.
+     *
+     * @param name compared string
+     * @param typedFilter user typed string
+     * @return boolean
+     */
+    private boolean filterName(final String name, final String typedFilter) {
+        boolean exclude = true;
+        if ("".equals(typedFilter)
+                || name.toLowerCase().startsWith(typedFilter.toLowerCase())) {
+            exclude = false;
+        }
+        return exclude;
+    }
+
+    /**
+     * Task is used in a new thread for reading and storing database meta data.
+     */
+    class DatabaseMetaDataTask extends Task<Void> {
+
+        /**
+         * Connection to database.
+         */
+        private Connection connection;
+
+        /**
+         * Contructor.
+         *
+         * @param connection Connection to database.
+         */
+        public DatabaseMetaDataTask(final Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public Void call() {
+            DatabaseMetaDataController.this.btnSave.setDisable(true);
+            try {
+                DatabaseMetaDataController.this.readAndSaveDBMetaData(
+                        DatabaseMetaDataController.this.connVO, this.connection
+                );
+            }
+            catch (Exception e) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        LOG.error("Error while saving database meta data!", e);
+                        MessageDialogBuilder.error(e).show(null);
+                    }
+                });
+            }
+            DatabaseMetaDataController.this.btnSave.setDisable(false);
+            return null;
+        }
+
+        @Override
+        protected void succeeded() {
+            super.succeeded();
+            DatabaseMetaDataController.this.refreshTreeViewDatabaseList(
+                    Common.getInstance().getDbstore().getDatabases());
+        }
+    }
 
 }

@@ -39,7 +39,7 @@
 
 
 .table-row-cell {
-	//-fx-pref-height: 2em;
+	/*-fx-pref-height: 2em;*/
 }
 
 .table-row-cell:changed {
