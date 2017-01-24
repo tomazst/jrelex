@@ -22,6 +22,7 @@ package si.comptus.jrelex;
 import com.panemu.tiwulfx.common.TiwulFXUtil;
 import java.net.URL;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -67,6 +68,8 @@ import si.comptus.jrelex.container.ConnBean;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import si.comptus.jrelex.configuration.JRelExIterator;
 import si.comptus.jrelex.configuration.RDBMSType;
 import si.comptus.jrelex.database.DatabaseMetaDataDAO;
 
@@ -183,6 +186,17 @@ public class DatabaseMetaDataController implements Initializable {
     private Label lblDatabase;
 
     /**
+     * Form control. Editable combo box to insert or chose Oracle Driver.
+     */
+    @FXML
+    private ComboBox<String> cbDriver;
+    /**
+     * Form control. Oracle SID.
+     */
+    @FXML
+    private TextField txfSID;
+
+    /**
      * String.
      */
     private static final String STR_DATABASES = "Databases";
@@ -202,6 +216,8 @@ public class DatabaseMetaDataController implements Initializable {
     @Override
     public final void initialize(final URL url, final ResourceBundle rb) {
 
+        this.connVO = new DatabaseConnDataVO();
+
         this.cbDbms.setItems(Common.getInstance().enumsToList(RDBMSType.values()));
 
         this.refreshTreeViewDatabaseList(
@@ -214,7 +230,7 @@ public class DatabaseMetaDataController implements Initializable {
         this.trvDatabaseList.setEditable(true);
 
         this.trvDatabaseList.getSelectionModel().selectedItemProperty()
-                .addListener((ChangeListener<Object>) (ObservableValue<?> ov, Object t, Object t1) -> {
+                .addListener((ChangeListener<Object>) (ObservableValue<? extends Object> ov, Object t, Object t1) -> {
                     final TreeItem<?> treeItem = (TreeItem<?>) t1;
                     if (treeItem != null
                     && treeItem.getParent() != null
@@ -270,7 +286,7 @@ public class DatabaseMetaDataController implements Initializable {
      * Default form data.
      */
     public final void newConnection() {
-        this.cbDbms.setValue("");
+        this.cbDbms.setValue("NONE");
         this.txfName.setText("");
         this.txfHostname.setText("");
         this.cbPort.setValue("0000");
@@ -407,6 +423,13 @@ public class DatabaseMetaDataController implements Initializable {
         } else {
             vo.setDatabase(this.cbDatabase.getValue());
         }
+        vo.setOrclSID(this.txfSID.getText());
+        if (this.cbDriver.getValue() == null) {
+            vo.setOrclDriver(this.cbDriver.getEditor().getText());
+        } else {
+            vo.setOrclDriver(this.cbDriver.getValue());
+        }
+
         return vo;
     }
 
@@ -422,6 +445,27 @@ public class DatabaseMetaDataController implements Initializable {
         );
         this.newConnection();
         this.refreshTreeViewDatabaseList(Common.getInstance().getDbstore().getDatabases());
+    }
+
+    /**
+     * Deletes database meta data.
+     */
+    public final void enableFormElements() {
+        String dbmsName = cbDbms.getSelectionModel().getSelectedItem();
+
+        RDBMSType dbmsType = Enum.valueOf(RDBMSType.class, dbmsName);
+        if(dbmsType.equals(RDBMSType.ORACLE)){
+            txfSID.setDisable(false);
+            String databaseName = this.cbDatabase.getValue();
+            if (databaseName == null) {
+                databaseName = this.cbDatabase.getEditor().getText();
+            }
+            txfSID.setText(databaseName);
+            cbDriver.setDisable(false);
+        } else {
+            txfSID.setDisable(true);
+            cbDriver.setDisable(true);
+        }
     }
 
     /**
@@ -646,7 +690,9 @@ public class DatabaseMetaDataController implements Initializable {
                         vo.getPort(),
                         vo.getUsername(),
                         vo.getPassword(),
-                        vo.getDatabase()
+                        vo.getDatabase(),
+                        vo.getOrclSID(),
+                        vo.getOrclDriver()
                 );
         final Connection connection = ds.getConnection();
         return connection;
@@ -657,8 +703,9 @@ public class DatabaseMetaDataController implements Initializable {
      *
      * @param vo Contains essential data
      * @param connection Connection to database
+     * @throws JRelExException
      */
-    private void readAndSaveDBMetaData(final DatabaseConnDataVO vo, final Connection connection) {
+    private void readAndSaveDBMetaData(final DatabaseConnDataVO vo, final Connection connection) throws JRelExException {
 
         // we add informations on connection
         final ConnBean bean = new ConnBean();
@@ -669,6 +716,8 @@ public class DatabaseMetaDataController implements Initializable {
         bean.setUsername(vo.getUsername());
         bean.setPassword(vo.getPassword());
         bean.setDatabase(vo.getDatabase());
+        bean.setOrclSID(vo.getOrclSID());
+        bean.setOrclDriver(vo.getOrclDriver());
 
         // Collect meta data from database
         final CDatabase metaData = this.readDBMetaData(bean, connection);
@@ -681,7 +730,7 @@ public class DatabaseMetaDataController implements Initializable {
         // Save meta data in to file
         if (Common.getInstance().saveSerializedDBMetaDataToDisk(
                 Common.getInstance().getDbstore())) {
-            JOptionPane.showMessageDialog(null, "Sucsesss :) !!!");
+            JOptionPane.showMessageDialog(null, "Successs :) !!!");
         }
     }
 
@@ -691,31 +740,35 @@ public class DatabaseMetaDataController implements Initializable {
      * @param bean Contains essential data
      * @param connection Connection to database
      * @return CDatabase object
+     * @throws JRelExException
      */
-    private CDatabase readDBMetaData(final ConnBean bean, final Connection connection) {
+    private CDatabase readDBMetaData(final ConnBean bean, final Connection connection) throws JRelExException {
 
         DatabaseMetaDataDAO metaDataDao = null;
         try {
+            CTable table2;
             metaDataDao = new DatabaseMetaDataDAO(connection, bean);
             metaDataDao.getDatabaseContainer().setName(bean.getDatabase());
+
+            JRelExIterator<CTable> iterator = metaDataDao.Iterator();
+
             try {
                 this.txtProgress.setText("");
-                while (metaDataDao.tableIteratorHasNext()) {
-                    final CTable table = metaDataDao.tableIteratorNext();
-
+                CTable table;
+                while ((table = iterator.next()) != null) {
                     // UI Progress bar.
                     this.txtProgress.setText(this.txtProgress.getText()
                             + "Reading table: " + table.getName()
-                            + " - " + metaDataDao.getCurrentTableIndex()
+                            + " - " + iterator.currentIndex()
                             + " of " + metaDataDao.getTableCount() + "\n"
                     );
                     this.txtProgress.setScrollTop(Double.MAX_VALUE);
-                    final float progress = (float) metaDataDao.getTableCount()
+                    final float progress = (float) iterator.currentIndex()
                             / (float) metaDataDao.getTableCount();
                     this.progressBar.setProgress(progress);
                 }
             } finally {
-                metaDataDao.tableIteratorClose();
+                metaDataDao.getResultSetTables().close();
             }
 
         } catch (SQLException e) {
@@ -727,8 +780,9 @@ public class DatabaseMetaDataController implements Initializable {
 
         if (metaDataDao != null) {
             return metaDataDao.getDatabaseContainer();
+        } else {
+            throw new JRelExException("No database meta data!");
         }
-        return null;
     }
 
     /**

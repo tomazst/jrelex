@@ -37,6 +37,8 @@ public class DatabaseConnDataVO {
     private StringProperty username = new SimpleStringProperty("");
     private StringProperty password = new SimpleStringProperty("");
     private StringProperty database = new SimpleStringProperty("");
+    private StringProperty orclSID = new SimpleStringProperty("");
+    private StringProperty orclDriver = new SimpleStringProperty("");
 
     public DatabaseConnDataVO() {
     }
@@ -123,6 +125,22 @@ public class DatabaseConnDataVO {
 
     public void setPassword(String password) {
         this.password.set(password);
+    }
+
+    public String getOrclSID() {
+        return orclSID.get();
+    }
+
+    public void setOrclSID(String orclSID) {
+        this.orclSID.set(orclSID);
+    }
+
+    public String getOrclDriver() {
+        return orclDriver.get();
+    }
+
+    public void setOrclDriver(String orclDriver) {
+        this.orclDriver.set(orclDriver);
     }
 
 }

@@ -73,7 +73,8 @@ public class DatabaseInteraction {
             try {
                 dataSource = getDataSource(bean.getDriver(),
                         bean.getHostname(), bean.getPort(), bean.getUsername(),
-                        bean.getPassword(), bean.getDatabase());
+                        bean.getPassword(), bean.getDatabase(),
+                        bean.getOrclSID(), bean.getOrclDriver());
                 this.conections.put(connectionName, dataSource.getConnection());
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
@@ -102,7 +103,8 @@ public class DatabaseInteraction {
      * @throws Exception
      */
     public DataSource getDataSource(RDBMSType driver, String servername, int port,
-            String user, String password, String database) throws SQLException {
+            String user, String password, String database,
+            String orclSID, String orclDriver) throws SQLException {
 
         switch (driver) {
             case MSSQL:
@@ -113,7 +115,7 @@ public class DatabaseInteraction {
                         user, password, database);
             case ORACLE:
                 return (DataSource) this.getOraclelDataSource(servername, port,
-                        user, password, database);
+                        user, password, database, orclSID, orclDriver);
             default:
                 return null;
         }
@@ -132,7 +134,7 @@ public class DatabaseInteraction {
      * @throws Exception
      */
     public DataSource getDataSource(RDBMSType driver, String servername, int port,
-            String user, String password) throws SQLException {
+            String user, String password, String orclDriver) throws SQLException {
 
         switch (driver) {
             case MSSQL:
@@ -143,7 +145,7 @@ public class DatabaseInteraction {
                         user, password, null);
             case ORACLE:
                 return (DataSource) this.getOraclelDataSource(servername, port,
-                        user, password, null);
+                        user, password, null, null, orclDriver);
             default:
                 return null;
         }
@@ -184,18 +186,16 @@ public class DatabaseInteraction {
     }
 
     private OracleDataSource getOraclelDataSource(String servername, int port,
-            String user, String password, String database) throws SQLException {
+            String user, String password, String database,
+            String orclSID, String orclDriver) throws SQLException {
 
         // Setting up the DataSource object
         OracleDataSource ds = new OracleDataSource();
 
-        ds.setDriverType("thin");
-
+        ds.setDriverType(orclDriver);
         ds.setServerName(servername);
         ds.setPortNumber(port);
-        if (database != null) {
-            ds.setDatabaseName(database);
-        }
+        ds.setDatabaseName(orclSID);
         ds.setUser(user);
         ds.setPassword(password);
 
@@ -210,7 +210,8 @@ public class DatabaseInteraction {
                 connVO.getHostname(),
                 connVO.getPort(),
                 connVO.getUsername(),
-                connVO.getPassword()
+                connVO.getPassword(),
+                connVO.getOrclDriver()
         );
 
         ResultSet dbs;

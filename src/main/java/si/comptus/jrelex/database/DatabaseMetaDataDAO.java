@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.Common;
+import si.comptus.jrelex.configuration.JRelExIterator;
 import si.comptus.jrelex.configuration.RDBMSType;
 import si.comptus.jrelex.container.CColumn;
 import si.comptus.jrelex.container.CDatabase;
@@ -47,7 +48,6 @@ public class DatabaseMetaDataDAO {
      */
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DatabaseMetaDataDAO.class);
 
-    private Connection connection;
     private String databaseName;
     private String username;
     private RDBMSType rdbmsType;
@@ -57,13 +57,13 @@ public class DatabaseMetaDataDAO {
     private String catalog = "";
     private String shema = "";
 
-    private int tableCount;
+    private int tableCount = 0;
     private TableIterator tableIterator;
+
+    private ResultSet resultSetTables;
 
     public DatabaseMetaDataDAO(Connection connection, ConnBean bean) throws SQLException {
 
-        this.connection = connection;
-        this.databaseName = bean.getDatabase();
         this.username = bean.getUsername();
         this.rdbmsType = bean.getDriver();
 
@@ -73,47 +73,35 @@ public class DatabaseMetaDataDAO {
 
         this.databaseContainer = new CDatabase();
         this.databaseContainer.setConnBean(bean);
-        this.tableCount = this.countTables();
+
         this.databaseContainer.setTables(
                 new HashMap<String, CTable>(
-                        this.tableCount
+                        this.getTableCount()
                 )
         );
 
-        // setting table iterator
+    }
+
+    public JRelExIterator<CTable> Iterator() throws SQLException{
         String[] types = {"TABLE"};
-        this.tableIterator = new DatabaseMetaDataDAO.TableIterator(
-                this.metaData.getTables(this.catalog, null, null, types),
+        this.resultSetTables = this.metaData.getTables(this.catalog, null, null, types);
+        int row = resultSetTables.getRow();
+
+        return new DatabaseMetaDataDAO.TableIterator(
+                this.resultSetTables,
                 this.databaseContainer,
                 this.metaData,
                 this.catalog,
                 this.shema
             );
-
-    }
-
-    public CTable tableIteratorNext() {
-        return this.tableIterator.next();
-    }
-
-    public boolean tableIteratorHasNext() {
-        return this.tableIterator.hasNext();
-    }
-
-    public void tableIteratorClose() throws SQLException{
-        this.tableIterator.resultSetClose();
     }
 
     public CDatabase getDatabaseContainer() {
         return this.databaseContainer;
     }
 
-    public int getCurrentTableIndex(){
-        return this.tableIterator.getCurrentTableIndex();
-    }
-
     public DatabaseMetaData getMetaData() throws SQLException {
-        return connection.getMetaData();
+        return this.metaData;
     }
 
     public String getCatalog() {
@@ -124,8 +112,15 @@ public class DatabaseMetaDataDAO {
         return shema;
     }
 
-    public int getTableCount() {
+    public int getTableCount() throws SQLException {
+        if(this.tableCount == 0) {
+            this.tableCount = this.countTables();
+        }
         return tableCount;
+    }
+
+    public ResultSet getResultSetTables(){
+        return resultSetTables;
     }
 
     private int countTables() throws SQLException {
@@ -167,7 +162,7 @@ public class DatabaseMetaDataDAO {
         return tableCount;
     }
 
-    class TableIterator implements Iterator {
+    class TableIterator implements JRelExIterator<CTable> {
 
         private ResultSet resultSetTables = null;
         private int currentTableIndex = 0;
@@ -185,12 +180,13 @@ public class DatabaseMetaDataDAO {
                     String catalog,
                     String shema) throws SQLException {
 
-            resultSetTables.beforeFirst();
             this.resultSetTables = resultSetTables;
             this.databaseContainer = databaseContainer;
             this.metaData = metaData;
             this.catalog = catalog;
             this.shema = shema;
+
+            //resultSetTables.beforeFirst(); // dela le z mysql resultset
 
         }
 
@@ -198,7 +194,7 @@ public class DatabaseMetaDataDAO {
         public boolean hasNext() {
             boolean hasNext = true;
             try {
-                if (this.resultSetTables.isLast()) {
+                if (this.resultSetTables.isAfterLast()) {
                     hasNext = false;
                 }
             }
@@ -235,11 +231,8 @@ public class DatabaseMetaDataDAO {
             return table;
         }
 
-        public void resultSetClose() throws SQLException{
-            this.resultSetTables.close();
-        }
-
-        public int getCurrentTableIndex() {
+        @Override
+        public int currentIndex() {
             return currentTableIndex;
         }
 
@@ -323,11 +316,11 @@ public class DatabaseMetaDataDAO {
                 }
             }
         }
-        
+
         private void setPrimaryKeys(CTable table) throws SQLException{
             // we add primary key info
             ResultSet resultSetPrimaryKeys = this.metaData
-                    .getPrimaryKeys(connection.getCatalog(), null, table.getName());
+                    .getPrimaryKeys(this.catalog, null, table.getName());
             try {
                 while (resultSetPrimaryKeys.next()) {
                     String columnName = resultSetPrimaryKeys.getString(4);

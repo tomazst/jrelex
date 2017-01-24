@@ -8,19 +8,19 @@
     <name>jRelExOptimal</name>
 
     <version>1.0.1</version>
-    
+
     <organization>
         <!-- Used as the 'Vendor' for JNLP generation -->
         <name>Comptus</name>
     </organization>
 
     <properties>
-    	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<javafx.version>2.2</javafx.version>
+      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javafx.version>2.2</javafx.version>
         <slf4j.version>1.6.1</slf4j.version>
         <exec.mainClass>si.comptus.jrelex.MainApp</exec.mainClass>
-		<maven.compiler.source>1.7</maven.compiler.source>
-		<maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
 
     <build>
@@ -29,24 +29,9 @@
             <plugin>
                 <groupId>com.zenjava</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
-                <version>2.0</version>
+                <version>8.6.0</version>
                 <configuration>
-	                
                     <mainClass>si.comptus.jrelex.MainApp</mainClass>
-                    
-                    <manifest>
-				      <addClasspath>true</addClasspath>
-				      <classpathPrefix>lib/</classpathPrefix>
-				          <mainClass>si.comptus.jrelex.MainApp</mainClass>
-				    </manifest>
-
-                    <!-- only required if signing the jar file -->
-                    <keyStoreAlias>example-user</keyStoreAlias>
-                    <keyStorePassword>example-password</keyStorePassword>
-                    <permissions>
-                        <permission>all-permissions</permission>
-                    </permissions>
-
                 </configuration>
             </plugin>
             <plugin>
@@ -63,7 +48,7 @@
 
 
     <dependencies>
-    
+
         <!-- MigLayout -->
 
         <dependency>
@@ -92,13 +77,13 @@
             <artifactId>jcl-over-slf4j</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-		<dependency>
+    <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j.version}</version>
         </dependency>
-        <!-- 
-       	<dependency>
+        <!--
+         <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>javafx</artifactId>
                 <version>2.2</version>
@@ -117,13 +102,13 @@
         </dependency>
          <dependency>
             <groupId>com.oracle</groupId>
-            <artifactId>ojdbc7</artifactId>
-            <version>12.1.0.1</version>
+            <artifactId>ojdbc</artifactId>
+            <version>12.1.0.2</version>
         </dependency>
         <dependency>
                 <groupId>com.microsoft.sqlserver</groupId>
-                <artifactId>sqljdbc4</artifactId>
-                <version>3.0</version>
+                <artifactId>sqljdbc42</artifactId>
+                <version>4.2</version>
         </dependency>
         <dependency>
                 <groupId>javassist</groupId>
@@ -142,8 +127,8 @@
         </dependency>
         <dependency>
             <groupId>com.panemu</groupId>
-            <artifactId>tiwulfxLocal</artifactId>
-            <version>2.0</version>
+            <artifactId>tiwulfx</artifactId>
+            <version>2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -164,6 +149,11 @@
             <groupId>com.miglayout</groupId>
             <artifactId>miglayout-core</artifactId>
             <version>4.2</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
         </dependency>
     </dependencies>
 

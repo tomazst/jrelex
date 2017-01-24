@@ -25,6 +25,6 @@ package si.comptus.jrelex.configuration;
  */
 public enum RDBMSType {
 
-    MSSQL, MYSQL, ORACLE;
+    NONE, MSSQL, MYSQL, ORACLE;
 
 }

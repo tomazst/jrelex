@@ -33,22 +33,22 @@ import si.comptus.jrelex.container.CTable;
  * @author tomaz
  */
 public class DatabaseMetaDataDAOTest {
-    
+
     public DatabaseMetaDataDAOTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
@@ -56,13 +56,13 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of tableIteratorNext method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testTableIteratorNext() {
         System.out.println("tableIteratorNext");
         DatabaseMetaDataDAO instance = null;
         CTable expResult = null;
-        CTable result = instance.tableIteratorNext();
-        assertEquals(expResult, result);
+        //CTable result = instance.tableIteratorNext();
+        //assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -70,13 +70,13 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of tableIteratorHasNext method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testTableIteratorHasNext() {
         System.out.println("tableIteratorHasNext");
         DatabaseMetaDataDAO instance = null;
         boolean expResult = false;
-        boolean result = instance.tableIteratorHasNext();
-        assertEquals(expResult, result);
+        //boolean result = instance.tableIteratorHasNext();
+        //assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -84,11 +84,11 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of tableIteratorClose method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testTableIteratorClose() throws Exception {
         System.out.println("tableIteratorClose");
         DatabaseMetaDataDAO instance = null;
-        instance.tableIteratorClose();
+        //instance.tableIteratorClose();
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -96,7 +96,7 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getDatabaseContainer method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetDatabaseContainer() {
         System.out.println("getDatabaseContainer");
         DatabaseMetaDataDAO instance = null;
@@ -110,13 +110,13 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getCurrentTableIndex method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetCurrentTableIndex() {
         System.out.println("getCurrentTableIndex");
         DatabaseMetaDataDAO instance = null;
         int expResult = 0;
-        int result = instance.getCurrentTableIndex();
-        assertEquals(expResult, result);
+        //int result = instance.getCurrentTableIndex();
+        //assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
@@ -124,7 +124,7 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getMetaData method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetMetaData() throws Exception {
         System.out.println("getMetaData");
         DatabaseMetaDataDAO instance = null;
@@ -138,7 +138,7 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getCatalog method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetCatalog() {
         System.out.println("getCatalog");
         DatabaseMetaDataDAO instance = null;
@@ -152,7 +152,7 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getShema method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetShema() {
         System.out.println("getShema");
         DatabaseMetaDataDAO instance = null;
@@ -166,15 +166,15 @@ public class DatabaseMetaDataDAOTest {
     /**
      * Test of getTableCount method, of class DatabaseMetaDataDAO.
      */
-    @Test
+    //@Test
     public void testGetTableCount() {
         System.out.println("getTableCount");
         DatabaseMetaDataDAO instance = null;
         int expResult = 0;
-        int result = instance.getTableCount();
-        assertEquals(expResult, result);
+        //int result = instance.getTableCount();
+        //assertEquals(expResult, result);
         // TODO review the generated test code and remove the default call to fail.
         fail("The test case is a prototype.");
     }
-    
+
 }
