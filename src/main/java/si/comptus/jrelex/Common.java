@@ -37,7 +37,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TitledPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
@@ -286,8 +285,8 @@ public class Common {
      * @param ens Array of enums
      * @return ObservableList
      */
-    public <E extends Enum<E>> ObservableList enumsToList(final E[] ens) {
-        final ObservableList list = FXCollections.observableArrayList();
+    public <E extends Enum<E>> ObservableList<String> enumsToList(final E[] ens) {
+        final ObservableList<String> list = FXCollections.observableArrayList();
         for (E item : ens) {
             list.add(item.toString());
         }

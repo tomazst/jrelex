@@ -27,16 +27,16 @@ import si.comptus.jrelex.configuration.RDBMSType;
  * @author tomaz
  */
 public class DynamicQueryFactory {
-    
-    public static DynamicQueryAbstract getDynamicQuery(RDBMSType type, Connection conn) 
+
+    public static <T>DynamicQueryAbstract<T> getDynamicQuery(RDBMSType type, Connection conn)
             throws JRelExException{
         switch(type) {
             case MYSQL:
-                return new MysqlDynamicQuery(conn);
+                return new MysqlDynamicQuery<>(conn);
             case MSSQL:
-                return new SqlserverDynamicQuery(conn);
+                return new SqlserverDynamicQuery<>(conn);
             case ORACLE:
-                return new OracleDynamicQuery(conn);
+                return new OracleDynamicQuery<>(conn);
             default:
                 throw new JRelExException("This type of RDBMSType is not supported");
         }

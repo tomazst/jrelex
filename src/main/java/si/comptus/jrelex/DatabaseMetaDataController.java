@@ -124,7 +124,7 @@ public class DatabaseMetaDataController implements Initializable {
      * database, table or column can be shown in relational browser.
      */
     @FXML
-    private TreeView trvDatabaseList;
+    private TreeView<String> trvDatabaseList;
     /**
      * It saves form connection data and database meta data to local file (dbmanagement.ser).
      */

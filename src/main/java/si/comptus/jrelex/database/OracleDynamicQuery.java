@@ -30,7 +30,6 @@ import java.util.List;
 
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.SortType;
-import javafx.scene.control.TextField;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -48,339 +47,328 @@ import com.panemu.tiwulfx.common.TableCriteria.Operator;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 
 /**
- * 
+ *
  * @author tomaz
  */
-public class OracleDynamicQuery extends DynamicQueryAbstract {
-	private Connection conn;
-	private static final Logger log = LoggerFactory
-			.getLogger(OracleDynamicQuery.class);
+public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
+    private Connection conn;
+    private static final Logger log = LoggerFactory
+            .getLogger(OracleDynamicQuery.class);
 
-	public OracleDynamicQuery(Connection conn) {
-		this.conn = conn;
-	}
+    public OracleDynamicQuery(Connection conn) {
+        this.conn = conn;
+    }
 
-	public Connection getConn() {
-		return conn;
-	}
+    public Connection getConn() {
+        return conn;
+    }
 
-	public void setConn(Connection conn) {
-		this.conn = conn;
-	}
+    public void setConn(Connection conn) {
+        this.conn = conn;
+    }
 
-	public ResultSet getTableData(CTable table, String databaseName,
-			String storedDatabaseName, List<TableCriteria> filteredColumns,
-			List<String> sortedColumns,
-			List<TableColumn.SortType> sortingOrders, int startIndex,
-			int maxResult) {
-		ResultSet rs = null;
+    public ResultSet getTableData(CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria<T>> filteredColumns,
+            List<String> sortedColumns,
+            List<TableColumn.SortType> sortingOrders, int startIndex,
+            int maxResult) {
+        ResultSet rs = null;
 
-		String orderby = null;
-		
-		startIndex++;
+        String orderby = null;
 
-		String firstColName = table.getColumnNames().get(0);
-		orderby = " ORDER BY " + firstColName;
+        startIndex++;
 
-		if (sortedColumns != null) {
-			if (sortedColumns.size() != 0) {
-				orderby = sorts(sortedColumns, sortingOrders);
-			}
-		}
+        String firstColName = table.getColumnNames().get(0);
+        orderby = " ORDER BY " + firstColName;
 
-		ArrayList<String> cols = new ArrayList<String>();
-		for (CColumn col : table.getColumns()) {
-			cols.add(col.getName());
-		}
-		String columns = StringUtils.join(cols, ",");
+        if (sortedColumns != null) {
+            if (sortedColumns.size() != 0) {
+                orderby = sorts(sortedColumns, sortingOrders);
+            }
+        }
 
-		String sql1 = "SELECT " + columns + " FROM " 
-				+ table.getName();
+        ArrayList<String> cols = new ArrayList<String>();
+        for (CColumn col : table.getColumns()) {
+            cols.add(col.getName());
+        }
+        String columns = StringUtils.join(cols, ",");
 
-		String where = getWhere(table, filteredColumns);
-		
-		if(where.isEmpty()){
-			where = " WHERE ";
-		} else {
-			where = where + " AND ";
-		}
-		
-		if (maxResult == 0) {
-			maxResult = Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay();
-		}
-		
-		int maxIndex = startIndex + maxResult;
-		
-		where = where + " ROWNUM BETWEEN " + startIndex + " AND " + maxResult; 
-		
-		String sql = sql1 + where + orderby;
+        String sql1 = "SELECT " + columns + " FROM "
+                + table.getName();
 
-		//log.info(sql);
+        String where = getWhere(table, filteredColumns);
 
-		Statement stmt;
-		try {
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery(sql);
-		} catch (SQLException e) {
-			log.error("Error: ", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
+        if(where.isEmpty()){
+            where = " WHERE ";
+        } else {
+            where = where + " AND ";
+        }
 
-		return rs;
-	}
+        if (maxResult == 0) {
+            maxResult = Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay();
+        }
 
-	public ResultSet getTableData(CTable table, String databaseName,
-			String storedDatabaseName, List<TableCriteria> filteredColumns) {
-		return getTableData(table, databaseName, storedDatabaseName,
-				filteredColumns, null, null, 0, 0);
-	}
+        where = where + " ROWNUM BETWEEN " + startIndex + " AND " + maxResult;
 
-	private String sorts(List<String> sortedColumns,
-			List<TableColumn.SortType> sortingOrders) {
+        String sql = sql1 + where + orderby;
 
-		String orderby = "";
+        //log.info(sql);
 
-		for (int i = 0; i < sortedColumns.size(); i++) {
-			if (sortingOrders.get(i).equals(SortType.DESCENDING)) {
-				orderby += sortedColumns.get(i) + " desc";
-			} else {
-				orderby += sortedColumns.get(i) + " asc";
-			}
+        Statement stmt;
+        try {
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            log.error("Error: ", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
 
-			if (sortedColumns.size() - 1 != i) {
-				orderby += ",";
-			}
-		}
+        return rs;
+    }
 
-		if (!orderby.isEmpty()) {
-			orderby = " ORDER BY " + orderby;
-		}
+    public ResultSet getTableData(CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria<T>> filteredColumns) {
+        return getTableData(table, databaseName, storedDatabaseName,
+                filteredColumns, null, null, 0, 0);
+    }
 
-		return orderby;
-	}
+    private String sorts(List<String> sortedColumns,
+            List<TableColumn.SortType> sortingOrders) {
 
-	public int getRecordCount(CTable table, String databaseName,
-			List<TableCriteria> filteredColumns) {
+        String orderby = "";
 
-		String sql = "SELECT COUNT(*) as c FROM "
-				+ table.getName() + " " + getWhere(table, filteredColumns);
-		Statement stmt = null;
-		int count = 0;
-		try {
-			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery(sql);
-			if (rs != null) {
-				rs.next();
-				count = rs.getInt("c");
-			}
-		} catch (SQLException e) {
-			log.error("Error: ", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
-		return count;
-	}
+        for (int i = 0; i < sortedColumns.size(); i++) {
+            if (sortingOrders.get(i).equals(SortType.DESCENDING)) {
+                orderby += sortedColumns.get(i) + " desc";
+            } else {
+                orderby += sortedColumns.get(i) + " asc";
+            }
 
-	private String getWhere(CTable table, List<TableCriteria> filteredColumns) {
-		String where = "";
-		ArrayList<String> conditions = this.conditions(table, filteredColumns);
-		where = StringUtils.join(conditions, " and ");
+            if (sortedColumns.size() - 1 != i) {
+                orderby += ",";
+            }
+        }
 
-		if (!where.isEmpty()) {
-			where = " WHERE " + where;
-		}
+        if (!orderby.isEmpty()) {
+            orderby = " ORDER BY " + orderby;
+        }
 
-		return where;
-	}
+        return orderby;
+    }
 
-	private ArrayList<String> conditions(CTable table,
-			List<TableCriteria> filteredColumns) {
+    public int getRecordCount(CTable table, String databaseName,
+            List<TableCriteria<T>> filteredColumns) {
 
-		ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
+        String sql = "SELECT COUNT(*) as c FROM "
+                + table.getName() + " " + getWhere(table, filteredColumns);
+        Statement stmt = null;
+        int count = 0;
+        try {
+            stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs != null) {
+                rs.next();
+                count = rs.getInt("c");
+            }
+        } catch (SQLException e) {
+            log.error("Error: ", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
+        return count;
+    }
 
-		for (TableCriteria filteredColumn : filteredColumns) {
+    private String getWhere(CTable table, List<TableCriteria<T>> filteredColumns) {
+        String where = "";
+        ArrayList<String> conditions = this.conditions(table, filteredColumns);
+        where = StringUtils.join(conditions, " and ");
 
-			String condition = "";
+        if (!where.isEmpty()) {
+            where = " WHERE " + where;
+        }
 
-			Operator operator = filteredColumn.getOperator();
-			String fieldValue = filteredColumn.getValue().toString();
-			String fieldName = filteredColumn.getAttributeName();
+        return where;
+    }
 
-			String fieldValueWithApostrof = fieldValue;
+    private ArrayList<String> conditions(CTable table,
+            List<TableCriteria<T>> filteredColumns) {
 
-			if (!this.isNumericType(table.getColumnByName(fieldName).getType())) {
-				fieldValueWithApostrof = "'" + fieldValue + "'";
-			}
+        ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
 
-			switch (operator) {
-			case eq:
-				condition += fieldName + " = " + fieldValueWithApostrof;
-				break;
-			case ne:
-				condition += fieldName + " != " + fieldValueWithApostrof;
-				break;
-			case le:
-				condition += fieldName + " <= " + fieldValueWithApostrof;
-				break;
-			case lt:
-				condition += fieldName + " < " + fieldValueWithApostrof;
-				break;
-			case ge:
-				condition += fieldName + " >= " + fieldValueWithApostrof;
-				break;
-			case gt:
-				condition += fieldName + " > " + fieldValueWithApostrof;
-				break;
-			case like_begin:
-				condition += fieldName + " LIKE '" + fieldValue + "%'";
-				break;
-			case like_anywhere:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
-				break;
-			case like_end:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
-				break;
-			case ilike_begin:
-				condition += fieldName + " LIKE '" + fieldValue + "%'";
-				break;
-			case ilike_anywhere:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
-				break;
-			case ilike_end:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
-				break;
-			case is_null:
-				condition += fieldName + " IS NULL";
-				break;
-			case is_not_null:
-				condition += fieldName + " IS NOT NULL";
-				break;
-			case in:
-				condition += fieldName + " IN (" + fieldValueWithApostrof + ")";
-				break;
-			case not_in:
-				condition += fieldName + " NOT IN (" + fieldValueWithApostrof
-						+ ")";
-				break;
-			default:
-			}
-			conditions.add(condition);
-		}
-		return conditions;
-	}
+        for (TableCriteria<? extends Object> filteredColumn : filteredColumns) {
 
-	private void displaySql(String sql) {
-		TextField txtField = new TextField();
-		// where.orderBy(this.sorts(sortedColumns, sortingOrders)).getSQL();
-		txtField.setText(sql);
-		txtField.setEditable(false);
-		// Common.getInstance().getBrowserController().titlePaneSQLView.setContent(txtField);
-	}
+            String condition = "";
 
-	@Override
-	public HashMap<String, CReferenceData> getReferencedData(
-			String storedDatabaseName, String databaseName, String tableName,
-			CColumn column, String value) {
-		// TODO Auto-generated method stub
-		/**
-		 * Example; select ( select count(*) as opomini from opomini where
-		 * id_opomin = 1 ) as opomini, ( select count(*) as napovedani_izklopi
-		 * from napovedani_izklopi where id_opomin = 1 ) as napovedani_izklopi,
-		 * ( select count(*) as racuni from where racuni id_opomin = 1 ) as
-		 * racuni
-		 */
+            Operator operator = filteredColumn.getOperator();
+            String fieldValue = filteredColumn.getValue().toString();
+            String fieldName = filteredColumn.getAttributeName();
 
-		// If value is null or empty string we don't search for values in other
-		// tables
-		CSettings settings = Common.getInstance().getDbstore().getAppSettings();
-		
-		if(!settings.isShowRefToNullData()) {
-			if(value == null){
-				return new HashMap<>(0);
-			}
-		}
-		
-		if(!settings.isShowRefToEmptyData()){
-			if(value.trim() == ""){
-				return new HashMap<>(0);
-			}
-		}
+            String fieldValueWithApostrof = fieldValue;
 
-		int initialSize = column.getReferences().size() + 1;
-		HashMap<String, CReferenceData> referencedColumnData = new HashMap<>(
-				initialSize);
-		// ArrayList<String> subQrys = new ArrayList<>(); // for subquerys
-		String[] subQrys = new String[initialSize];
+            if (!this.isNumericType(table.getColumnByName(fieldName).getType())) {
+                fieldValueWithApostrof = "'" + fieldValue + "'";
+            }
 
-		CReferenceData rdata = new CReferenceData();
-		rdata.setStoredDatabase(storedDatabaseName);
-		rdata.setDatabaseName(databaseName);
-		rdata.setTableName(tableName);
-		rdata.setColumnName(column.getName());
-		setKeys(storedDatabaseName, rdata);
-		rdata.setValue(value);
-		
-		
-		int cix=1;
-		String id = getColumnAlias(cix);
-		rdata.setId(id);
-		referencedColumnData.put(id, rdata);
+            switch (operator) {
+            case eq:
+                condition += fieldName + " = " + fieldValueWithApostrof;
+                break;
+            case ne:
+                condition += fieldName + " != " + fieldValueWithApostrof;
+                break;
+            case le:
+                condition += fieldName + " <= " + fieldValueWithApostrof;
+                break;
+            case lt:
+                condition += fieldName + " < " + fieldValueWithApostrof;
+                break;
+            case ge:
+                condition += fieldName + " >= " + fieldValueWithApostrof;
+                break;
+            case gt:
+                condition += fieldName + " > " + fieldValueWithApostrof;
+                break;
+            case like_begin:
+                condition += fieldName + " LIKE '" + fieldValue + "%'";
+                break;
+            case like_anywhere:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
+                break;
+            case like_end:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
+                break;
+            case ilike_begin:
+                condition += fieldName + " LIKE '" + fieldValue + "%'";
+                break;
+            case ilike_anywhere:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
+                break;
+            case ilike_end:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
+                break;
+            case is_null:
+                condition += fieldName + " IS NULL";
+                break;
+            case is_not_null:
+                condition += fieldName + " IS NOT NULL";
+                break;
+            case in:
+                condition += fieldName + " IN (" + fieldValueWithApostrof + ")";
+                break;
+            case not_in:
+                condition += fieldName + " NOT IN (" + fieldValueWithApostrof
+                        + ")";
+                break;
+            default:
+            }
+            conditions.add(condition);
+        }
+        return conditions;
+    }
+/*
+    private void displaySql(String sql) {
+        TextField txtField = new TextField();
+        // where.orderBy(this.sorts(sortedColumns, sortingOrders)).getSQL();
+        txtField.setText(sql);
+        txtField.setEditable(false);
+        // Common.getInstance().getBrowserController().titlePaneSQLView.setContent(txtField);
+    }
+*/
+    @Override
+    public HashMap<String, CReferenceData> getReferencedData(
+            String storedDatabaseName, String databaseName, String tableName,
+            CColumn column, String value) {
+        // If value is null or empty string we don't search for values in other
+        // tables
+        CSettings settings = Common.getInstance().getDbstore().getAppSettings();
 
-		String fieldValue = value;
-		if (!this.isNumericType(column.getType())) {
-			fieldValue = "'" + value + "'";
-		}
+        if(!settings.isShowRefToNullData()) {
+            if(value == null){
+                return new HashMap<>(0);
+            }
+        }
 
-		int i = 0;
-		subQrys[i] = " (SELECT COUNT(*) FROM " + tableName + " WHERE "
-				+ column.getName() + "=" + fieldValue + ") AS " + id;
+        if(!settings.isShowRefToEmptyData()){
+            if(value.trim() == ""){
+                return new HashMap<>(0);
+            }
+        }
 
-		for (CReference reference : column.getReferences()) {
-			cix++;
-			CReferenceData rdata2 = new CReferenceData();
-			rdata2.setStoredDatabase(storedDatabaseName);
-			rdata2.setDatabaseName(databaseName);
-			rdata2.setTableName(reference.getReferencedTable());
-			rdata2.setColumnName(reference.getReferencedColumn());
-			rdata2.setValue(value);
-			id = getColumnAlias(cix);
-			rdata2.setId(id);
-			setKeys(storedDatabaseName, rdata2);
-			referencedColumnData.put(rdata2.getId(), rdata2);
+        int initialSize = column.getReferences().size() + 1;
+        HashMap<String, CReferenceData> referencedColumnData = new HashMap<>(
+                initialSize);
+        // ArrayList<String> subQrys = new ArrayList<>(); // for subquerys
+        String[] subQrys = new String[initialSize];
 
-			fieldValue = value;
-			if (!this.isNumericType(column.getType())) {
-				fieldValue = "'" + value + "'";
-			}
+        CReferenceData rdata = new CReferenceData();
+        rdata.setStoredDatabase(storedDatabaseName);
+        rdata.setDatabaseName(databaseName);
+        rdata.setTableName(tableName);
+        rdata.setColumnName(column.getName());
+        setKeys(storedDatabaseName, rdata);
+        rdata.setValue(value);
 
-			i++;
-			subQrys[i] = " (SELECT COUNT(*) FROM "
-					+ reference.getReferencedTable() + " WHERE "
-					+ reference.getReferencedColumn() + "=" + fieldValue
-					+ ") AS " + id;
 
-		}
+        int cix=1;
+        String id = getColumnAlias(cix);
+        rdata.setId(id);
+        referencedColumnData.put(id, rdata);
 
-		try {
-			Statement stmt = conn.createStatement();
-			String sql = "SELECT " + StringUtils.join(subQrys, ",") + " FROM DUAL";
-			//log.info(sql);
-			ResultSet rs = stmt.executeQuery(sql);
-			rs.next();
+        String fieldValue = value;
+        if (!this.isNumericType(column.getType())) {
+            fieldValue = "'" + value + "'";
+        }
 
-			Iterator iterator = referencedColumnData.keySet().iterator();
-			while (iterator.hasNext()) {
-				String key = (String) iterator.next();
-				CReferenceData referenceData = (CReferenceData) referencedColumnData
-						.get(key);
-				referenceData.setStrikes((int) rs.getInt(key));
-			}
+        int i = 0;
+        subQrys[i] = " (SELECT COUNT(*) FROM " + tableName + " WHERE "
+                + column.getName() + "=" + fieldValue + ") AS " + id;
 
-		} catch (SQLException e) {
-			log.error("Erorr while getting data", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
+        for (CReference reference : column.getReferences()) {
+            cix++;
+            CReferenceData rdata2 = new CReferenceData();
+            rdata2.setStoredDatabase(storedDatabaseName);
+            rdata2.setDatabaseName(databaseName);
+            rdata2.setTableName(reference.getReferencedTable());
+            rdata2.setColumnName(reference.getReferencedColumn());
+            rdata2.setValue(value);
+            id = getColumnAlias(cix);
+            rdata2.setId(id);
+            setKeys(storedDatabaseName, rdata2);
+            referencedColumnData.put(rdata2.getId(), rdata2);
 
-		return referencedColumnData;
-	}
+            fieldValue = value;
+            if (!this.isNumericType(column.getType())) {
+                fieldValue = "'" + value + "'";
+            }
+
+            i++;
+            subQrys[i] = " (SELECT COUNT(*) FROM "
+                    + reference.getReferencedTable() + " WHERE "
+                    + reference.getReferencedColumn() + "=" + fieldValue
+                    + ") AS " + id;
+
+        }
+
+        try {
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT " + StringUtils.join(subQrys, ",") + " FROM DUAL";
+            //log.info(sql);
+            ResultSet rs = stmt.executeQuery(sql);
+            rs.next();
+
+            Iterator<String> iterator = referencedColumnData.keySet().iterator();
+            while (iterator.hasNext()) {
+                String key = iterator.next();
+                CReferenceData referenceData = (CReferenceData) referencedColumnData
+                        .get(key);
+                referenceData.setStrikes((int) rs.getInt(key));
+            }
+
+        } catch (SQLException e) {
+            log.error("Erorr while getting data", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
+
+        return referencedColumnData;
+    }
 
 }

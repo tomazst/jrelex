@@ -25,7 +25,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.Common;
 import si.comptus.jrelex.configuration.JRelExIterator;
@@ -48,7 +47,6 @@ public class DatabaseMetaDataDAO {
      */
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DatabaseMetaDataDAO.class);
 
-    private String databaseName;
     private String username;
     private RDBMSType rdbmsType;
     private CDatabase databaseContainer = null;
@@ -58,7 +56,6 @@ public class DatabaseMetaDataDAO {
     private String shema = "";
 
     private int tableCount = 0;
-    private TableIterator tableIterator;
 
     private ResultSet resultSetTables;
 
@@ -85,7 +82,6 @@ public class DatabaseMetaDataDAO {
     public JRelExIterator<CTable> Iterator() throws SQLException{
         String[] types = {"TABLE"};
         this.resultSetTables = this.metaData.getTables(this.catalog, null, null, types);
-        int row = resultSetTables.getRow();
 
         return new DatabaseMetaDataDAO.TableIterator(
                 this.resultSetTables,

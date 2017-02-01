@@ -50,18 +50,19 @@ import com.panemu.tiwulfx.table.CheckBoxColumn;
 import com.panemu.tiwulfx.table.DateColumn;
 import com.panemu.tiwulfx.table.NumberColumn;
 import com.panemu.tiwulfx.table.TableControl;
+import com.panemu.tiwulfx.table.TableController;
 import com.panemu.tiwulfx.table.TextColumn;
-import javafx.scene.control.Button;
 
 /**
- * 
+ *
  * @author tomaz
- * @param <T> 
+ *
+ * @param <V> Type of table cell value
  */
-public class DatabaseExplorerTab<T> {
+public class DatabaseExplorerTab<V> {
 
     private static final Logger LOG = LoggerFactory.getLogger(DatabaseExplorerTab.class);
-    private TableControl<T> exploreTable;
+    private TableControl<? extends Object> exploreTable;
 
     private Tab tab;
 
@@ -78,7 +79,7 @@ public class DatabaseExplorerTab<T> {
             CTable table,
             String databaseName,
             String storedDatabaseName,
-            List<TableCriteria<T>> filteredColumns) {
+            List<TableCriteria<V>> filteredColumns) {
         this.showTable(tabPaneExploreDatabases, conn, table, databaseName, storedDatabaseName, filteredColumns);
     }
 
@@ -87,58 +88,45 @@ public class DatabaseExplorerTab<T> {
             CTable table,
             String databaseName,
             String storedDatabaseName,
-            List<TableCriteria<T>> filteredColumns
+            List<TableCriteria<V>> filteredColumns
     ) {
 
         Object obj = Common.getInstance().getPojoGenerator().createPojoForTable(table.getName(), table);
 
         // create table
-        exploreTable = new TableControl(obj.getClass());
+        exploreTable = new TableControl<>(obj.getClass());
         exploreTable.setVisibleComponents(false, TableControl.Component.BUTTON_EDIT,
                 TableControl.Component.BUTTON_DELETE,
                 TableControl.Component.BUTTON_SAVE,
                 TableControl.Component.BUTTON_INSERT,
                 TableControl.Component.BUTTON_RELOAD
         );
-                //Button b = exploreTable.get            
-		/*
-         Button btnUnsetFilter = new Button("Unset filter");
-         btnUnsetFilter.setTooltip(new Tooltip("Unset filter"));
-         btnUnsetFilter.setOnAction(new EventHandler<ActionEvent>() {
-			
-         @Override
-         public void handle(ActionEvent arg0) {
-         exploreTable.clearTableCriteria();
-         exploreTable.reload();
-				
-         }
-         });
-         exploreTable.addButton(btnUnsetFilter);
-         */
 
         exploreTable.getTableView().setId(table.getName());
 
-        // get data controller
-        DatabaseTableController controller = null;
         try {
-            controller = new DatabaseTableController(exploreTable, 
+            // get data controller
+            DatabaseTableController controller = null;
+            controller = new DatabaseTableController(exploreTable,
                     conn, databaseName, obj, table, storedDatabaseName);
+
+            if (filteredColumns != null) {
+                controller.setFilteredColumns(filteredColumns);
+            }
+
+            exploreTable.setController(controller);
         }
         catch(JRelExException e){
             LOG.error(e.getMessage(), e);
             MessageDialogBuilder.error(e).show(null);
         }
-        
-        if (filteredColumns != null) {
-            controller.setFilteredColumns(filteredColumns);
-        }
-        
-        exploreTable.setController(controller);
+
+
 
         Map<String, Class<?>> tableProperties = Common.getInstance().getPojoGenerator()
                 .getLastPojoProperties();
 
-		// Adding table columns
+        // Adding table columns
         // first is column for position numbering
         BaseColumn positionCol = new BaseColumn("position", 30);
         positionCol.setId("position");
@@ -158,10 +146,10 @@ public class DatabaseExplorerTab<T> {
         BaseColumn referCol = new BaseColumn("references", 30);
         referCol.setId("references");
         referCol.setCellFactory((Callback<TableColumn, TableCell>)(TableColumn col) -> {
-            return new ReferencesCell<>();            
+            return new ReferencesCell<>();
         });
 
-        referCol.setText("");
+        referCol.setText("References");
         referCol.setSortable(false);
         referCol.setFilterable(false);
 
@@ -189,7 +177,7 @@ public class DatabaseExplorerTab<T> {
                 col.setFilterable(true);
             }
             else if (clazz.equals(Boolean.class)) {
-                CheckBoxColumn<T> chkCol = new CheckBoxColumn<>(column.getName());
+                CheckBoxColumn<? extends Object> chkCol = new CheckBoxColumn<>(column.getName());
                 col = (BaseColumn) chkCol;
                 col.setFilterable(true);
             }
@@ -215,7 +203,7 @@ public class DatabaseExplorerTab<T> {
 
         }
 
-		//exploreTable.getSelectionModel().cellSelectionEnabledProperty().unbind();
+        //exploreTable.getSelectionModel().cellSelectionEnabledProperty().unbind();
         //exploreTable.getSelectionModel().setCellSelectionEnabled(true);
                 //exploreTable.setSelectionMode();
         //exploreTable.setSelectionMode(SelectionMode.MULTIPLE);
@@ -232,9 +220,9 @@ public class DatabaseExplorerTab<T> {
             tabPaneExploreDatabases.getTabs().add(tab);
         }
 
-		//exploreTable.getTableView().setOnMouseReleased(tableRightClickListener);
+        //exploreTable.getTableView().setOnMouseReleased(tableRightClickListener);
         tab.setContent(exploreTable);
-		//tabPaneExploreDatabases.getSelectionModel().select(tab);
+        //tabPaneExploreDatabases.getSelectionModel().select(tab);
 
     }
 

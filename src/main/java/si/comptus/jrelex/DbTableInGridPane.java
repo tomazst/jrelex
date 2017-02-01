@@ -50,13 +50,13 @@ import javafx.scene.image.ImageView;
 import si.comptus.jrelex.configuration.RDBMSType;
 import si.comptus.jrelex.database.DynamicQueryFactory;
 
-public class DbTableInGridPane<T> {
+public class DbTableInGridPane {
 
     private static final Logger log = LoggerFactory
             .getLogger(DatabaseTableController.class);
 
-    private DynamicQueryAbstract dq;
-    private List<TableCriteria<T>> filteredColumns = null;
+    private DynamicQueryAbstract<String> dq;
+    private List<TableCriteria<String>> filteredColumns = null;
     private String storedDatabaseName = "";
 
     private String referedColumn = "";
@@ -74,30 +74,30 @@ public class DbTableInGridPane<T> {
 
     }
 
-    public List<TableCriteria<T>> getFilteredColumns() {
+    public List<TableCriteria<String>> getFilteredColumns() {
         return filteredColumns;
     }
 
-    public void setFilteredColumns(List<TableCriteria<T>> filteredColumns) {
+    public void setFilteredColumns(List<TableCriteria<String>> filteredColumns) {
         this.filteredColumns = filteredColumns;
     }
 
-    public GridPane getTableGrid(String databaseName, CTable table, List<TableCriteria> filteredColumns) {
+    public GridPane getTableGrid(String databaseName, CTable table, List<TableCriteria<String>> filteredColumns) {
 
         ArrayList<String> filters = new ArrayList<String>();
         // Grid pane
         GridPane grid = new GridPane();
-		//grid.setStyle("-fx-background-color: rgb(180, 180, 180);");
+        //grid.setStyle("-fx-background-color: rgb(180, 180, 180);");
         //grid.setPadding(new Insets(20));
         grid.setVgap(1);
         grid.setHgap(1);
 
-		// too improove performance
+        // too improove performance
         //grid.setCache(true);
         grid.setCacheHint(CacheHint.SPEED);
 
         if (this.filteredColumns != null) {
-            for (TableCriteria<T> criteria : this.filteredColumns) {
+            for (TableCriteria<String> criteria : this.filteredColumns) {
                 filteredColumns.add(criteria);
                 filters.add(criteria.getAttributeName());
             }
@@ -178,7 +178,7 @@ public class DbTableInGridPane<T> {
 
             while (rs.next()) { // table row
 
-				//HashMap<String, CColumnTableReferences> references = new HashMap<>(count);
+                //HashMap<String, CColumnTableReferences> references = new HashMap<>(count);
                 colNumber = 0;
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) { // columns
                     int type = rsmd.getColumnType(i);
@@ -186,7 +186,7 @@ public class DbTableInGridPane<T> {
                     String columnName = rsmd.getColumnName(i);
                     Label cellValue = new Label();
                     cellValue.setPrefHeight(20);
-						//cellValue.setStyle("-fx-font-weight: thin;");
+                        //cellValue.setStyle("-fx-font-weight: thin;");
                     //cellValue.setFont(Font.font ("Regular", FontWeight.THIN, 30));
                     //log.info(cellValue.getFont().toString());
 

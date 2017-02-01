@@ -19,7 +19,6 @@
 
 package si.comptus.jrelex;
 
-
 import java.util.HashMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -30,50 +29,52 @@ import javafx.scene.image.ImageView;
 import si.comptus.jrelex.container.CColumnTableReferences;
 
 public class ReferencesCell<S, T> extends TableCell<S, T> {
-	TableCell tableCell;
-	
-	public ReferencesCell(){
-		super();
-		tableCell = this;
-	}
-		
-	@Override 
-        public void updateItem(final T item, boolean empty) {
-		super.updateItem(item, empty);
-		
+    TableCell<S,T> tableCell;
+
+    public ReferencesCell() {
+        super();
+        tableCell = this;
+    }
+
+    @Override
+    public void updateItem(final T item, boolean empty) {
+        super.updateItem(item, empty);
+
         if (empty) {
-        	setText(null);
+            setText(null);
             setGraphic(null);
         } else {
-        	Image image = new Image(getClass().getResourceAsStream("/images/b_relations.png"));
-    		ImageView imageView = new ImageView(image);
-    		imageView.setSmooth(true);    		
-        	
-        	Hyperlink link = new Hyperlink("");
-        	
-        	link.setGraphic(imageView);
-        	link.setOnAction(new EventHandler<ActionEvent>() {
-        	    @Override
-        	    public void handle(ActionEvent e) {
-        	    	//selection.isSelected(2);
-        	    	Hyperlink link = (Hyperlink) e.getSource();
-        	    	//TableCell tableCell = (TableCell) link.getParent().getParent();
-        	    	TableCell tableCell = (TableCell) link.getParent();
-        	    	
-        	    	//tableCell.getTableRow().setStyle("-fx-background-color: #eed3d7");
-        	    	//tableCell.getTableView().getFocusModel().focus(tableCell.getTableRow().getIndex());
-        	    	tableCell.getTableView().getSelectionModel().select(tableCell.getTableRow().getIndex());
-        	        //Dialog dialog = new Dialog<T>(item, tableCell);
-        	    	
-        	    	ColumnRefToTablesView ref = new ColumnRefToTablesView();
-        	    	ref.showReferences(item, tableCell);
-        	    	
-        	    }
-        	});
-        	
-        	setGraphic(link);
+            Image image = new Image(getClass().getResourceAsStream("/images/b_relations.png"));
+            ImageView imageView = new ImageView(image);
+            imageView.setSmooth(true);
+
+            Hyperlink link = new Hyperlink("");
+
+            link.setGraphic(imageView);
+            link.setOnAction(new EventHandler<ActionEvent>() {
+                @SuppressWarnings("unchecked")
+                @Override
+                public void handle(ActionEvent e) {
+                    // selection.isSelected(2);
+                    Hyperlink link = (Hyperlink) e.getSource();
+                    // TableCell tableCell = (TableCell)
+                    // link.getParent().getParent();
+                    TableCell<S,T> tableCell = (TableCell<S,T>) link.getParent();
+
+                    // tableCell.getTableRow().setStyle("-fx-background-color:
+                    // #eed3d7");
+                    // tableCell.getTableView().getFocusModel().focus(tableCell.getTableRow().getIndex());
+                    tableCell.getTableView().getSelectionModel().select(tableCell.getTableRow().getIndex());
+                    // Dialog dialog = new Dialog<T>(item, tableCell);
+
+                    ColumnRefToTablesView ref = new ColumnRefToTablesView();
+                    ref.showReferences((HashMap<String, CColumnTableReferences>) item, tableCell);
+
+                }
+            });
+            setGraphic(link);
         }
-        
-	}
-	
+
+    }
+
 }

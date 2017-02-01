@@ -56,21 +56,28 @@ import com.panemu.tiwulfx.table.TableController;
 import si.comptus.jrelex.configuration.RDBMSType;
 import si.comptus.jrelex.database.DynamicQueryFactory;
 
-public class DatabaseTableController<T> extends TableController<T> {
+/**
+ *
+ * @author tomaz
+ *
+ * @param <T> record (table row)
+ * @param <V> value (table cell value)
+ */
+public class DatabaseTableController<T, V> extends TableController<T> {
 
     private static final Logger log = LoggerFactory
             .getLogger(DatabaseTableController.class);
 
     private Class<T> clazz;
     private String databaseName;
-    private DynamicQueryAbstract dq;
-    private List<TableCriteria<T>> filteredColumns = null;
+    private DynamicQueryAbstract<V> dq;
+    private List<TableCriteria<V>> filteredColumns = null;
     private String storedDatabaseName = "";
     private TableControl<T> exploreTable;
     private CTable databaseTable;
 
     public DatabaseTableController(TableControl<T> exploreTable,
-            Connection conn, String databaseName, T obj, CTable databaseTable,
+            Connection conn, String databaseName, Object obj, CTable databaseTable,
             String storedDatabaseName) throws JRelExException {
         super();
 
@@ -88,80 +95,89 @@ public class DatabaseTableController<T> extends TableController<T> {
 
     }
 
-    public List<TableCriteria<T>> getFilteredColumns() {
+    public List<TableCriteria<V>> getFilteredColumns() {
         return filteredColumns;
     }
 
-    public void setFilteredColumns(List<TableCriteria<T>> filteredColumns) {
+    public void setFilteredColumns(List<TableCriteria<V>> filteredColumns) {
         this.filteredColumns = filteredColumns;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public TableData loadData(int startIndex,
+    public TableData<T> loadData(int startIndex,
             List<TableCriteria> filteredColumns, List<String> sortedColumns,
             List<SortType> sortingOrders, int maxResult) {
 
-        ArrayList<String> filters = new ArrayList<String>();
+        ArrayList<String> filters = new ArrayList<>();
 
         if (this.filteredColumns != null) {
-            for (TableCriteria<T> criteria : this.filteredColumns) {
+            for (TableCriteria<V> criteria : this.filteredColumns) {
                 filteredColumns.add(criteria);
                 filters.add(criteria.getAttributeName());
             }
             // then we empty local filters
             this.filteredColumns = null;
         }
+
+        // Want to be Generic
+        List<TableCriteria<V>> filteredColumnsG = new ArrayList<>();
+        for(@SuppressWarnings("rawtypes") TableCriteria criteria : filteredColumns){
+            filteredColumnsG.add((TableCriteria<V>)criteria);
+        }
+
+
         /*
-		// Hack - adding icons for foreign and primary keys
-		for (TableColumn<T, ?> col : exploreTable.getTableView().getColumns()) { // go
-																							// throo
-																							// all
-																							// columns
-																							// of
-																							// tableview
-					//TableColumn<T, ?> col = obj;
+        // Hack - adding icons for foreign and primary keys
+        for (TableColumn<T, ?> col : exploreTable.getTableView().getColumns()) { // go
+                                                                                            // throo
+                                                                                            // all
+                                                                                            // columns
+                                                                                            // of
+                                                                                            // tableview
+                    //TableColumn<T, ?> col = obj;
 
-					CColumn column = databaseTable.getColumnByName(col.getText()); // get
-																					// database
-																					// data
-																					// for
-																					// table
-																					// column
+                    CColumn column = databaseTable.getColumnByName(col.getText()); // get
+                                                                                    // database
+                                                                                    // data
+                                                                                    // for
+                                                                                    // table
+                                                                                    // column
 
-					if (column.isForeignKey() || column.isPrimaryKey()) {
+                    if (column.isForeignKey() || column.isPrimaryKey()) {
 
-						boolean filterIsSet = false;
-						for (TableCriteria<T> criteria : filteredColumns) {
-							if (criteria.getAttributeName().equals(column.getName())) {
-								filterIsSet = true;
-							}
-						}
+                        boolean filterIsSet = false;
+                        for (TableCriteria<T> criteria : filteredColumns) {
+                            if (criteria.getAttributeName().equals(column.getName())) {
+                                filterIsSet = true;
+                            }
+                        }
 
-						if (filterIsSet) {
-							continue;
-						}
+                        if (filterIsSet) {
+                            continue;
+                        }
 
-						if (column.isPrimaryKey()) {
-							col.setGraphic(new ImageView(
-									new Image(getClass().getResourceAsStream(
-											"/images/primary-key.png"))
-									));
-						}
-						if (column.isForeignKey()) {
-							col.setGraphic(new ImageView(
-									new Image(getClass().getResourceAsStream(
-											"/images/foreign-keys.png"))
-									));
-						}
+                        if (column.isPrimaryKey()) {
+                            col.setGraphic(new ImageView(
+                                    new Image(getClass().getResourceAsStream(
+                                            "/images/primary-key.png"))
+                                    ));
+                        }
+                        if (column.isForeignKey()) {
+                            col.setGraphic(new ImageView(
+                                    new Image(getClass().getResourceAsStream(
+                                            "/images/foreign-keys.png"))
+                                    ));
+                        }
 
-					}
-				}
+                    }
+                }
          */
         ResultSet rs = this.dq.getTableData(databaseTable, databaseName,
-                this.storedDatabaseName, filteredColumns, sortedColumns,
+                this.storedDatabaseName, filteredColumnsG, sortedColumns,
                 sortingOrders, startIndex, maxResult);
 
-        ArrayList<T> data = new ArrayList<T>();
+        ArrayList<T> data = new ArrayList<>();
 
         int position = startIndex;
         // table data
@@ -196,12 +212,10 @@ public class DatabaseTableController<T> extends TableController<T> {
                         int type = rsmd.getColumnType(i);
 
                         String columnName = rsmd.getColumnName(i);
-                        if (columnName.equals("female")) {
-                            boolean debug = true;
-                        }
+
                         /*
-						 * If column has references to other tables then we
-						 * save and ad it to the data
+                         * If column has references to other tables then we
+                         * save and ad it to the data
                          */
                         if (databaseTable.getColumnByName(columnName).getReferences() != null) {
 
@@ -302,7 +316,7 @@ public class DatabaseTableController<T> extends TableController<T> {
         }
 
         int countAll = dq.getRecordCount(databaseTable, databaseName,
-                filteredColumns);
+                filteredColumnsG);
 
         boolean moreRows = false;
         if (startIndex < countAll) {
@@ -316,7 +330,7 @@ public class DatabaseTableController<T> extends TableController<T> {
     @Override
     public void exportToExcel(String title, int maxResult, TableControl<T> tblView, List<TableCriteria> lstCriteria) {
         try {
-            ExportToExcel exporter = new ExportToExcel();
+            ExportToExcel<T> exporter = new ExportToExcel<>();
             List<Double> lstWidth = new ArrayList<>();
             List<T> data = new ArrayList<>();
             List<String> lstSortedColumn = new ArrayList<>();
@@ -324,15 +338,15 @@ public class DatabaseTableController<T> extends TableController<T> {
 
             for (TableColumn<T, ?> tc : tblView.getTableView().getSortOrder()) {
                 if (tc instanceof BaseColumn) {
-                    lstSortedColumn.add(((BaseColumn) tc).getPropertyName());
+                    lstSortedColumn.add(((BaseColumn<T, ?>) tc).getPropertyName());
                 } else {
-                    PropertyValueFactory valFactory = (PropertyValueFactory) tc.getCellValueFactory();
+                    PropertyValueFactory<T, V> valFactory = (PropertyValueFactory) tc.getCellValueFactory();
                     lstSortedColumn.add(valFactory.getProperty());
                 }
                 lstSortedType.add(tc.getSortType());
             }
 
-            TableData vol;
+            TableData<T> vol;
             int startIndex2 = 0;
 
             do {

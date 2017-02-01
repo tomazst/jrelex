@@ -60,19 +60,20 @@ import si.comptus.jrelex.database.DynamicQueryAbstract;
 
 /**
  * It shows references in UI.
- * @author tomazst
+ * @author tomaz
+ *
+ * @param <T> type of record in row
+ * @param <V> type of value in a cell
  */
-public class ColumnRefToTablesView {
+public class ColumnRefToTablesView<T, V> {
 
     /**
      * Logger.
      */
     private static final Logger LOG = LoggerFactory.getLogger(ColumnRefToTablesView.class);
-    
+
     HashMap<String, CColumnTableReferences> colReferences = null;
 
-    private static final Logger log = LoggerFactory
-            .getLogger(ColumnRefToTablesView.class);
     /*
      * All references found for column value in database
      */
@@ -81,18 +82,18 @@ public class ColumnRefToTablesView {
     public ColumnRefToTablesView() {
     }
 
-    public <T> void showReferences(final T item, final TableCell tableCell) {
+    public void showReferences(final HashMap<String, CColumnTableReferences> item, final TableCell<T, V> tableCell) {
 
         allColumnsValueReferences = new HashMap<>();
 
         // need new object with parameters to get references
-        colReferences = (HashMap<String, CColumnTableReferences>)item;
+        colReferences = item;
 
         TreeItem<String> rootItem = new TreeItem<String>("References ("
                 + tableCell.getTableView().getId() + ")");
         rootItem.setExpanded(true);
 
-        Iterator iterator = colReferences.keySet().iterator();
+        Iterator<String> iterator = colReferences.keySet().iterator();
         while (iterator.hasNext()) {
 
             // Column name
@@ -120,13 +121,13 @@ public class ColumnRefToTablesView {
 
                     CColumnTableReferences colReference = colReferences
                             .get(columnName);
-					//log.info(colReference.getTableName());
+                    //log.info(colReference.getTableName());
 
                     // column value references in database
                     List<CReferenceData> references = allColumnsValueReferences
                             .get(colReference.getColumn().getName());
 
-					// TitledPane[] titledPanes = new
+                    // TitledPane[] titledPanes = new
                     // TitledPane[references.size()];
                     VBox vbox = new VBox();
 
@@ -136,7 +137,7 @@ public class ColumnRefToTablesView {
                         TableCriteria<String> tableCriteria = new TableCriteria<>(
                                 refData.getColumnName(), Operator.eq,
                                 refData.getValue());
-                        final List<TableCriteria> filteredColumns = new ArrayList<>();
+                        final List<TableCriteria<String>> filteredColumns = new ArrayList<>();
                         filteredColumns.add(tableCriteria);
 
                         CTable table = Common.getInstance().getDbstore()
@@ -167,14 +168,12 @@ public class ColumnRefToTablesView {
                                 Hyperlink link = (Hyperlink) e.getSource();
                                 link.setVisited(false);
 
-                                String tabName = refData.getTableName()
-                                        + "." + refData.getColumnName();
                                 Tab tab = Common.getInstance().tabExists(
                                         refData.getTableName(),
                                         Common.getInstance()
                                         .getTablesTabPane());
 
-								//if (tab == null) {
+                                //if (tab == null) {
                                 Connection conn = Common
                                         .getInstance()
                                         .getDatabaseInteraction()
@@ -189,7 +188,7 @@ public class ColumnRefToTablesView {
                                         .getTables()
                                         .get(refData.getTableName());
 
-                                DatabaseExplorerTab databaseExplorerTab = new DatabaseExplorerTab(
+                                DatabaseExplorerTab<String> databaseExplorerTab = new DatabaseExplorerTab<>(
                                         Common.getInstance()
                                         .getTablesTabPane(),
                                         conn, table, refData
@@ -198,7 +197,7 @@ public class ColumnRefToTablesView {
                                         filteredColumns);
                                 tab = databaseExplorerTab.getTab();
 
-								//}
+                                //}
                                 Common.getInstance().getTablesTabPane()
                                         .getSelectionModel().select(tab);
                             }
@@ -206,9 +205,9 @@ public class ColumnRefToTablesView {
 
                         vbox.getChildren().add(title);
 
-                        DbTableInGridPane<HashMap<String, CColumnTableReferences>> tableGrid = null;
+                        DbTableInGridPane tableGrid = null;
                         try {
-                            tableGrid = new DbTableInGridPane<>(
+                            tableGrid = new DbTableInGridPane(
                                     refData.getStoredDatabase(), refData.getColumnName(), conn);
                         }
                         catch (JRelExException e2) {
@@ -236,12 +235,11 @@ public class ColumnRefToTablesView {
                         vbox.getChildren().add(separator);
 
                         i++;
-
                     }
 
                     vbox.setSpacing(5);
                     vbox.setPadding(new Insets(10, 0, 0, 10));
-					//vbox.setStyle("-fx-border-color: #77ff11");
+                    //vbox.setStyle("-fx-border-color: #77ff11");
                     //vbox.setPrefWidth(1050);
                     VBox.setVgrow(vbox, Priority.ALWAYS);
 
@@ -254,7 +252,7 @@ public class ColumnRefToTablesView {
                         Tab tab = new Tab();
 
                         tab.setText("Referenced data");
-						//tab.setStyle("-fx-border-color: #FF0000");
+                        //tab.setStyle("-fx-border-color: #FF0000");
 
                         tab.setContent(scrollPane2);
                         tabPane.getTabs().add(tab);
@@ -268,7 +266,7 @@ public class ColumnRefToTablesView {
                         if (tabPane.getTabs().size() == 0) {
                             Tab tab = new Tab();
                             tab.setText("Referenced data");
-							//tab.setStyle("-fx-border-color: #FF0000");
+                            //tab.setStyle("-fx-border-color: #FF0000");
 
                             tab.setText("Referenced data");
                             tab.setContent(scrollPane2);
@@ -290,7 +288,7 @@ public class ColumnRefToTablesView {
             rootItem.getChildren().add(columnItem);
 
             // column references
-            DynamicQueryAbstract dq = colReference.getDq();
+            DynamicQueryAbstract<? extends Object> dq = colReference.getDq();
             // column value references in database. Counts data in the database.
             HashMap<String, CReferenceData> references_tmp = dq.getReferencedData(
                     colReference.getStoredDatabaseName(),
@@ -300,13 +298,13 @@ public class ColumnRefToTablesView {
 
             // order references HashMap in ArrayList. First are primary keys. Next are foreign keys.
             List<CReferenceData> references = new ArrayList<CReferenceData>(references_tmp.size());
-            Iterator ref_iterator = references_tmp.keySet().iterator();
+            Iterator<String> ref_iterator = references_tmp.keySet().iterator();
 
             List<CReferenceData> primary_refs = new ArrayList<>();
             List<CReferenceData> foreign_refs = new ArrayList<>();
 
             while (ref_iterator.hasNext()) {
-                String key = (String) ref_iterator.next();
+                String key = ref_iterator.next();
                 CReferenceData refData = references_tmp.get(key);
                 if (refData.getStrikes() > 0) {
                     if (refData.isColumnPrimaryKey()) {
@@ -357,17 +355,17 @@ public class ColumnRefToTablesView {
                 link.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent e) {// from hier i call table
-                        final ArrayList<TableCriteria> filteredColumns = new ArrayList<>();
-                        TableCriteria tableCriteria = new TableCriteria<>();
+                        final ArrayList<TableCriteria<String>> filteredColumns = new ArrayList<>();
+                        TableCriteria<String> tableCriteria = new TableCriteria<>();
                         tableCriteria.setAttributeName(refData
                                 .getColumnName());
                         tableCriteria.setOperator(Operator.eq);
                         tableCriteria.setValue(refData.getValue());
                         filteredColumns.add(tableCriteria);
 
-						//log.info(refData.getColumnName());
-						// List filteredColumns = (List) list;
-						/*
+                        //log.info(refData.getColumnName());
+                        // List filteredColumns = (List) list;
+                        /*
                          * Common.getInstance().getBrowserController().load(
                          * refData.getStoredDatabase(),
                          * refData.getTableName(), filteredColumns);
@@ -378,7 +376,7 @@ public class ColumnRefToTablesView {
                                 refData.getTableName(),
                                 Common.getInstance().getTablesTabPane());
 
-						//if (tab == null) {
+                        //if (tab == null) {
                         Connection conn = Common
                                 .getInstance()
                                 .getDatabaseInteraction()
@@ -396,7 +394,7 @@ public class ColumnRefToTablesView {
                                 filteredColumns);
                         tab = databaseExplorerTab.getTab();
 
-						//}
+                        //}
                         Common.getInstance().getTablesTabPane()
                                 .getSelectionModel().select(tab);
                     }
@@ -415,11 +413,11 @@ public class ColumnRefToTablesView {
         /*
          * tree.setCellFactory(new
          * Callback<TreeView<String>,TreeCell<String>>(){
-         * 
+         *
          * @Override public TreeCell<String> call(TreeView<String> p) { return
          * new LinkFieldTreeCellImpl(); } });
          */
-		// tree.setMinSize(200, 100);
+        // tree.setMinSize(200, 100);
         Tab tab = Common.getInstance().tabExists("Table references",
                 Common.getInstance().getExplorerLeftSideTabPane());
 

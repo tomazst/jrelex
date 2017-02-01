@@ -1,7 +1,22 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package si.comptus.jrelex.sql;
 
 import java.sql.Connection;
@@ -33,339 +48,339 @@ import com.panemu.tiwulfx.common.TableCriteria.Operator;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 
 /**
- * 
+ *
  * @author tomaz
  */
 public class DynamicQueryOracle extends AbstractDynamicQuery {
-	private Connection conn;
-	private static final Logger log = LoggerFactory
-			.getLogger(DynamicQueryOracle.class);
+    private Connection conn;
+    private static final Logger log = LoggerFactory
+            .getLogger(DynamicQueryOracle.class);
 
-	public DynamicQueryOracle(Connection conn) {
-		this.conn = conn;
-	}
+    public DynamicQueryOracle(Connection conn) {
+        this.conn = conn;
+    }
 
-	public Connection getConn() {
-		return conn;
-	}
+    public Connection getConn() {
+        return conn;
+    }
 
-	public void setConn(Connection conn) {
-		this.conn = conn;
-	}
+    public void setConn(Connection conn) {
+        this.conn = conn;
+    }
 
-	public ResultSet getTableData(CTable table, String databaseName,
-			String storedDatabaseName, List<TableCriteria> filteredColumns,
-			List<String> sortedColumns,
-			List<TableColumn.SortType> sortingOrders, int startIndex,
-			int maxResult) {
-		ResultSet rs = null;
+    public ResultSet getTableData(CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria> filteredColumns,
+            List<String> sortedColumns,
+            List<TableColumn.SortType> sortingOrders, int startIndex,
+            int maxResult) {
+        ResultSet rs = null;
 
-		String orderby = null;
-		
-		startIndex++;
+        String orderby = null;
 
-		String firstColName = table.getColumnNames().get(0);
-		orderby = " ORDER BY " + firstColName;
+        startIndex++;
 
-		if (sortedColumns != null) {
-			if (sortedColumns.size() != 0) {
-				orderby = sorts(sortedColumns, sortingOrders);
-			}
-		}
+        String firstColName = table.getColumnNames().get(0);
+        orderby = " ORDER BY " + firstColName;
 
-		ArrayList<String> cols = new ArrayList<String>();
-		for (CColumn col : table.getColumns()) {
-			cols.add(col.getName());
-		}
-		String columns = StringUtils.join(cols, ",");
+        if (sortedColumns != null) {
+            if (sortedColumns.size() != 0) {
+                orderby = sorts(sortedColumns, sortingOrders);
+            }
+        }
 
-		String sql1 = "SELECT " + columns + " FROM " 
-				+ table.getName();
+        ArrayList<String> cols = new ArrayList<String>();
+        for (CColumn col : table.getColumns()) {
+            cols.add(col.getName());
+        }
+        String columns = StringUtils.join(cols, ",");
 
-		String where = getWhere(table, filteredColumns);
-		
-		if(where.isEmpty()){
-			where = " WHERE ";
-		} else {
-			where = where + " AND ";
-		}
-		
-		if (maxResult == 0) {
-			maxResult = Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay();
-		}
-		
-		int maxIndex = startIndex + maxResult;
-		
-		where = where + " ROWNUM BETWEEN " + startIndex + " AND " + maxResult; 
-		
-		String sql = sql1 + where + orderby;
+        String sql1 = "SELECT " + columns + " FROM "
+                + table.getName();
 
-		//log.info(sql);
+        String where = getWhere(table, filteredColumns);
 
-		Statement stmt;
-		try {
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery(sql);
-		} catch (SQLException e) {
-			log.error("Error: ", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
+        if(where.isEmpty()){
+            where = " WHERE ";
+        } else {
+            where = where + " AND ";
+        }
 
-		return rs;
-	}
+        if (maxResult == 0) {
+            maxResult = Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay();
+        }
 
-	public ResultSet getTableData(CTable table, String databaseName,
-			String storedDatabaseName, List<TableCriteria> filteredColumns) {
-		return getTableData(table, databaseName, storedDatabaseName,
-				filteredColumns, null, null, 0, 0);
-	}
+        int maxIndex = startIndex + maxResult;
 
-	private String sorts(List<String> sortedColumns,
-			List<TableColumn.SortType> sortingOrders) {
+        where = where + " ROWNUM BETWEEN " + startIndex + " AND " + maxResult;
 
-		String orderby = "";
+        String sql = sql1 + where + orderby;
 
-		for (int i = 0; i < sortedColumns.size(); i++) {
-			if (sortingOrders.get(i).equals(SortType.DESCENDING)) {
-				orderby += sortedColumns.get(i) + " desc";
-			} else {
-				orderby += sortedColumns.get(i) + " asc";
-			}
+        //log.info(sql);
 
-			if (sortedColumns.size() - 1 != i) {
-				orderby += ",";
-			}
-		}
+        Statement stmt;
+        try {
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            log.error("Error: ", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
 
-		if (!orderby.isEmpty()) {
-			orderby = " ORDER BY " + orderby;
-		}
+        return rs;
+    }
 
-		return orderby;
-	}
+    public ResultSet getTableData(CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria> filteredColumns) {
+        return getTableData(table, databaseName, storedDatabaseName,
+                filteredColumns, null, null, 0, 0);
+    }
 
-	public int getRecordCount(CTable table, String databaseName,
-			List<TableCriteria> filteredColumns) {
+    private String sorts(List<String> sortedColumns,
+            List<TableColumn.SortType> sortingOrders) {
 
-		String sql = "SELECT COUNT(*) as c FROM "
-				+ table.getName() + " " + getWhere(table, filteredColumns);
-		Statement stmt = null;
-		int count = 0;
-		try {
-			stmt = conn.createStatement();
-			ResultSet rs = stmt.executeQuery(sql);
-			if (rs != null) {
-				rs.next();
-				count = rs.getInt("c");
-			}
-		} catch (SQLException e) {
-			log.error("Error: ", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
-		return count;
-	}
+        String orderby = "";
 
-	private String getWhere(CTable table, List<TableCriteria> filteredColumns) {
-		String where = "";
-		ArrayList<String> conditions = this.conditions(table, filteredColumns);
-		where = StringUtils.join(conditions, " and ");
+        for (int i = 0; i < sortedColumns.size(); i++) {
+            if (sortingOrders.get(i).equals(SortType.DESCENDING)) {
+                orderby += sortedColumns.get(i) + " desc";
+            } else {
+                orderby += sortedColumns.get(i) + " asc";
+            }
 
-		if (!where.isEmpty()) {
-			where = " WHERE " + where;
-		}
+            if (sortedColumns.size() - 1 != i) {
+                orderby += ",";
+            }
+        }
 
-		return where;
-	}
+        if (!orderby.isEmpty()) {
+            orderby = " ORDER BY " + orderby;
+        }
 
-	private ArrayList<String> conditions(CTable table,
-			List<TableCriteria> filteredColumns) {
+        return orderby;
+    }
 
-		ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
+    public int getRecordCount(CTable table, String databaseName,
+            List<TableCriteria> filteredColumns) {
 
-		for (TableCriteria filteredColumn : filteredColumns) {
+        String sql = "SELECT COUNT(*) as c FROM "
+                + table.getName() + " " + getWhere(table, filteredColumns);
+        Statement stmt = null;
+        int count = 0;
+        try {
+            stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs != null) {
+                rs.next();
+                count = rs.getInt("c");
+            }
+        } catch (SQLException e) {
+            log.error("Error: ", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
+        return count;
+    }
 
-			String condition = "";
+    private String getWhere(CTable table, List<TableCriteria> filteredColumns) {
+        String where = "";
+        ArrayList<String> conditions = this.conditions(table, filteredColumns);
+        where = StringUtils.join(conditions, " and ");
 
-			Operator operator = filteredColumn.getOperator();
-			String fieldValue = filteredColumn.getValue().toString();
-			String fieldName = filteredColumn.getAttributeName();
+        if (!where.isEmpty()) {
+            where = " WHERE " + where;
+        }
 
-			String fieldValueWithApostrof = fieldValue;
+        return where;
+    }
 
-			if (!this.isNumericType(table.getColumnByName(fieldName).getType())) {
-				fieldValueWithApostrof = "'" + fieldValue + "'";
-			}
+    private ArrayList<String> conditions(CTable table,
+            List<TableCriteria> filteredColumns) {
 
-			switch (operator) {
-			case eq:
-				condition += fieldName + " = " + fieldValueWithApostrof;
-				break;
-			case ne:
-				condition += fieldName + " != " + fieldValueWithApostrof;
-				break;
-			case le:
-				condition += fieldName + " <= " + fieldValueWithApostrof;
-				break;
-			case lt:
-				condition += fieldName + " < " + fieldValueWithApostrof;
-				break;
-			case ge:
-				condition += fieldName + " >= " + fieldValueWithApostrof;
-				break;
-			case gt:
-				condition += fieldName + " > " + fieldValueWithApostrof;
-				break;
-			case like_begin:
-				condition += fieldName + " LIKE '" + fieldValue + "%'";
-				break;
-			case like_anywhere:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
-				break;
-			case like_end:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
-				break;
-			case ilike_begin:
-				condition += fieldName + " LIKE '" + fieldValue + "%'";
-				break;
-			case ilike_anywhere:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
-				break;
-			case ilike_end:
-				condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
-				break;
-			case is_null:
-				condition += fieldName + " IS NULL";
-				break;
-			case is_not_null:
-				condition += fieldName + " IS NOT NULL";
-				break;
-			case in:
-				condition += fieldName + " IN (" + fieldValueWithApostrof + ")";
-				break;
-			case not_in:
-				condition += fieldName + " NOT IN (" + fieldValueWithApostrof
-						+ ")";
-				break;
-			default:
-			}
-			conditions.add(condition);
-		}
-		return conditions;
-	}
+        ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
 
-	private void displaySql(String sql) {
-		TextField txtField = new TextField();
-		// where.orderBy(this.sorts(sortedColumns, sortingOrders)).getSQL();
-		txtField.setText(sql);
-		txtField.setEditable(false);
-		// Common.getInstance().getBrowserController().titlePaneSQLView.setContent(txtField);
-	}
+        for (TableCriteria filteredColumn : filteredColumns) {
 
-	@Override
-	public HashMap<String, CReferenceData> getReferencedData(
-			String storedDatabaseName, String databaseName, String tableName,
-			CColumn column, String value) {
-		// TODO Auto-generated method stub
-		/**
-		 * Example; select ( select count(*) as opomini from opomini where
-		 * id_opomin = 1 ) as opomini, ( select count(*) as napovedani_izklopi
-		 * from napovedani_izklopi where id_opomin = 1 ) as napovedani_izklopi,
-		 * ( select count(*) as racuni from where racuni id_opomin = 1 ) as
-		 * racuni
-		 */
+            String condition = "";
 
-		// If value is null or empty string we don't search for values in other
-		// tables
-		CSettings settings = Common.getInstance().getDbstore().getAppSettings();
-		
-		if(!settings.isShowRefToNullData()) {
-			if(value == null){
-				return new HashMap<>(0);
-			}
-		}
-		
-		if(!settings.isShowRefToEmptyData()){
-			if(value.trim() == ""){
-				return new HashMap<>(0);
-			}
-		}
+            Operator operator = filteredColumn.getOperator();
+            String fieldValue = filteredColumn.getValue().toString();
+            String fieldName = filteredColumn.getAttributeName();
 
-		int initialSize = column.getReferences().size() + 1;
-		HashMap<String, CReferenceData> referencedColumnData = new HashMap<>(
-				initialSize);
-		// ArrayList<String> subQrys = new ArrayList<>(); // for subquerys
-		String[] subQrys = new String[initialSize];
+            String fieldValueWithApostrof = fieldValue;
 
-		CReferenceData rdata = new CReferenceData();
-		rdata.setStoredDatabase(storedDatabaseName);
-		rdata.setDatabaseName(databaseName);
-		rdata.setTableName(tableName);
-		rdata.setColumnName(column.getName());
-		setKeys(storedDatabaseName, rdata);
-		rdata.setValue(value);
-		
-		
-		int cix=1;
-		String id = getColumnAlias(cix);
-		rdata.setId(id);
-		referencedColumnData.put(id, rdata);
+            if (!this.isNumericType(table.getColumnByName(fieldName).getType())) {
+                fieldValueWithApostrof = "'" + fieldValue + "'";
+            }
 
-		String fieldValue = value;
-		if (!this.isNumericType(column.getType())) {
-			fieldValue = "'" + value + "'";
-		}
+            switch (operator) {
+            case eq:
+                condition += fieldName + " = " + fieldValueWithApostrof;
+                break;
+            case ne:
+                condition += fieldName + " != " + fieldValueWithApostrof;
+                break;
+            case le:
+                condition += fieldName + " <= " + fieldValueWithApostrof;
+                break;
+            case lt:
+                condition += fieldName + " < " + fieldValueWithApostrof;
+                break;
+            case ge:
+                condition += fieldName + " >= " + fieldValueWithApostrof;
+                break;
+            case gt:
+                condition += fieldName + " > " + fieldValueWithApostrof;
+                break;
+            case like_begin:
+                condition += fieldName + " LIKE '" + fieldValue + "%'";
+                break;
+            case like_anywhere:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
+                break;
+            case like_end:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
+                break;
+            case ilike_begin:
+                condition += fieldName + " LIKE '" + fieldValue + "%'";
+                break;
+            case ilike_anywhere:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "%'";
+                break;
+            case ilike_end:
+                condition += fieldName + " LIKE " + "'%" + fieldValue + "'";
+                break;
+            case is_null:
+                condition += fieldName + " IS NULL";
+                break;
+            case is_not_null:
+                condition += fieldName + " IS NOT NULL";
+                break;
+            case in:
+                condition += fieldName + " IN (" + fieldValueWithApostrof + ")";
+                break;
+            case not_in:
+                condition += fieldName + " NOT IN (" + fieldValueWithApostrof
+                        + ")";
+                break;
+            default:
+            }
+            conditions.add(condition);
+        }
+        return conditions;
+    }
 
-		int i = 0;
-		subQrys[i] = " (SELECT COUNT(*) FROM " + tableName + " WHERE "
-				+ column.getName() + "=" + fieldValue + ") AS " + id;
+    private void displaySql(String sql) {
+        TextField txtField = new TextField();
+        // where.orderBy(this.sorts(sortedColumns, sortingOrders)).getSQL();
+        txtField.setText(sql);
+        txtField.setEditable(false);
+        // Common.getInstance().getBrowserController().titlePaneSQLView.setContent(txtField);
+    }
 
-		for (CReference reference : column.getReferences()) {
-			cix++;
-			CReferenceData rdata2 = new CReferenceData();
-			rdata2.setStoredDatabase(storedDatabaseName);
-			rdata2.setDatabaseName(databaseName);
-			rdata2.setTableName(reference.getReferencedTable());
-			rdata2.setColumnName(reference.getReferencedColumn());
-			rdata2.setValue(value);
-			id = getColumnAlias(cix);
-			rdata2.setId(id);
-			setKeys(storedDatabaseName, rdata2);
-			referencedColumnData.put(rdata2.getId(), rdata2);
+    @Override
+    public HashMap<String, CReferenceData> getReferencedData(
+            String storedDatabaseName, String databaseName, String tableName,
+            CColumn column, String value) {
+        // TODO Auto-generated method stub
+        /**
+         * Example; select ( select count(*) as opomini from opomini where
+         * id_opomin = 1 ) as opomini, ( select count(*) as napovedani_izklopi
+         * from napovedani_izklopi where id_opomin = 1 ) as napovedani_izklopi,
+         * ( select count(*) as racuni from where racuni id_opomin = 1 ) as
+         * racuni
+         */
 
-			fieldValue = value;
-			if (!this.isNumericType(column.getType())) {
-				fieldValue = "'" + value + "'";
-			}
+        // If value is null or empty string we don't search for values in other
+        // tables
+        CSettings settings = Common.getInstance().getDbstore().getAppSettings();
 
-			i++;
-			subQrys[i] = " (SELECT COUNT(*) FROM "
-					+ reference.getReferencedTable() + " WHERE "
-					+ reference.getReferencedColumn() + "=" + fieldValue
-					+ ") AS " + id;
+        if(!settings.isShowRefToNullData()) {
+            if(value == null){
+                return new HashMap<>(0);
+            }
+        }
 
-		}
+        if(!settings.isShowRefToEmptyData()){
+            if(value.trim() == ""){
+                return new HashMap<>(0);
+            }
+        }
 
-		try {
-			Statement stmt = conn.createStatement();
-			String sql = "SELECT " + StringUtils.join(subQrys, ",") + " FROM DUAL";
-			//log.info(sql);
-			ResultSet rs = stmt.executeQuery(sql);
-			rs.next();
+        int initialSize = column.getReferences().size() + 1;
+        HashMap<String, CReferenceData> referencedColumnData = new HashMap<>(
+                initialSize);
+        // ArrayList<String> subQrys = new ArrayList<>(); // for subquerys
+        String[] subQrys = new String[initialSize];
 
-			Iterator iterator = referencedColumnData.keySet().iterator();
-			while (iterator.hasNext()) {
-				String key = (String) iterator.next();
-				CReferenceData referenceData = (CReferenceData) referencedColumnData
-						.get(key);
-				referenceData.setStrikes((int) rs.getInt(key));
-			}
+        CReferenceData rdata = new CReferenceData();
+        rdata.setStoredDatabase(storedDatabaseName);
+        rdata.setDatabaseName(databaseName);
+        rdata.setTableName(tableName);
+        rdata.setColumnName(column.getName());
+        setKeys(storedDatabaseName, rdata);
+        rdata.setValue(value);
 
-		} catch (SQLException e) {
-			log.error("Erorr while getting data", e);
-			MessageDialogBuilder.error(e).show(null);
-		}
 
-		return referencedColumnData;
-	}
+        int cix=1;
+        String id = getColumnAlias(cix);
+        rdata.setId(id);
+        referencedColumnData.put(id, rdata);
+
+        String fieldValue = value;
+        if (!this.isNumericType(column.getType())) {
+            fieldValue = "'" + value + "'";
+        }
+
+        int i = 0;
+        subQrys[i] = " (SELECT COUNT(*) FROM " + tableName + " WHERE "
+                + column.getName() + "=" + fieldValue + ") AS " + id;
+
+        for (CReference reference : column.getReferences()) {
+            cix++;
+            CReferenceData rdata2 = new CReferenceData();
+            rdata2.setStoredDatabase(storedDatabaseName);
+            rdata2.setDatabaseName(databaseName);
+            rdata2.setTableName(reference.getReferencedTable());
+            rdata2.setColumnName(reference.getReferencedColumn());
+            rdata2.setValue(value);
+            id = getColumnAlias(cix);
+            rdata2.setId(id);
+            setKeys(storedDatabaseName, rdata2);
+            referencedColumnData.put(rdata2.getId(), rdata2);
+
+            fieldValue = value;
+            if (!this.isNumericType(column.getType())) {
+                fieldValue = "'" + value + "'";
+            }
+
+            i++;
+            subQrys[i] = " (SELECT COUNT(*) FROM "
+                    + reference.getReferencedTable() + " WHERE "
+                    + reference.getReferencedColumn() + "=" + fieldValue
+                    + ") AS " + id;
+
+        }
+
+        try {
+            Statement stmt = conn.createStatement();
+            String sql = "SELECT " + StringUtils.join(subQrys, ",") + " FROM DUAL";
+            //log.info(sql);
+            ResultSet rs = stmt.executeQuery(sql);
+            rs.next();
+
+            Iterator iterator = referencedColumnData.keySet().iterator();
+            while (iterator.hasNext()) {
+                String key = (String) iterator.next();
+                CReferenceData referenceData = (CReferenceData) referencedColumnData
+                        .get(key);
+                referenceData.setStrikes((int) rs.getInt(key));
+            }
+
+        } catch (SQLException e) {
+            log.error("Erorr while getting data", e);
+            MessageDialogBuilder.error(e).show(null);
+        }
+
+        return referencedColumnData;
+    }
 
 }

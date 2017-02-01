@@ -55,20 +55,29 @@ import si.comptus.jrelex.container.CTable;
 import com.panemu.tiwulfx.control.DetachableTabPane;
 
 /**
- * 
+ *
  * @author tomaz
  */
 public class DatabaseExplorerController implements Initializable {
 
-    @FXML public TreeView<String> trvDatabaseList;
-    @FXML public TabPane leftSideTabPane;
-    @FXML public DetachableTabPane exploreTablesTabPane;
-    @FXML public SplitPane verticalSplitPane;
-    @FXML public TextField txtDatabaseFilter;
-    @FXML public ImageView imgViewDatabaseFilter;
-    @FXML public TextField txtTableFilter;
-    @FXML public ImageView imgViewTableFilter;
-    @FXML public SplitPane explorerSplitPane;
+    @FXML
+    public TreeView<String> trvDatabaseList;
+    @FXML
+    public TabPane leftSideTabPane;
+    @FXML
+    public DetachableTabPane exploreTablesTabPane;
+    @FXML
+    public SplitPane verticalSplitPane;
+    @FXML
+    public TextField txtDatabaseFilter;
+    @FXML
+    public ImageView imgViewDatabaseFilter;
+    @FXML
+    public TextField txtTableFilter;
+    @FXML
+    public ImageView imgViewTableFilter;
+    @FXML
+    public SplitPane explorerSplitPane;
 
     @FXML public ImageView imgViewReloadDatabaseList;
 
@@ -78,7 +87,7 @@ public class DatabaseExplorerController implements Initializable {
     @FXML public HBox hboxFilter;
 
     public void initialize(URL arg0, ResourceBundle arg1) {
-        
+
         verticalSplitPane.setDividerPositions(0.7);
         Common.getInstance().setVerticalSplitPane(verticalSplitPane);
         Common.getInstance().setExplorerLeftSideTabPane(leftSideTabPane);
@@ -176,8 +185,8 @@ public class DatabaseExplorerController implements Initializable {
 
             CDatabase storedDatabase = pairs.getValue();
 
-			// user can select to see database in tree view
-			/*
+            // user can select to see database in tree view
+            /*
              if(!storedDatabase.isVisible()){
              continue;
              }
@@ -253,7 +262,7 @@ public class DatabaseExplorerController implements Initializable {
                                     Connection conn = Common.getInstance().getDatabaseInteraction()
                                             .getConnection(storedDatabase);
 
-                                    showTableContent(exploreTablesTabPane, conn, table, 
+                                    showTableContent(exploreTablesTabPane, conn, table,
                                             databaseName, storedDatabase);
 
                                 }
