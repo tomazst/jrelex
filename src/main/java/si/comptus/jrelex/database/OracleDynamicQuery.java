@@ -98,21 +98,18 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String where = getWhere(table, filteredColumns);
 
-        if(where.isEmpty()){
-            where = " WHERE ";
-        } else {
-            where = where + " AND ";
-        }
-
         if (maxResult == 0) {
             maxResult = Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay();
         }
 
-        where = where + " ROWNUM BETWEEN " + startIndex + " AND " + maxResult;
-
-        String sql = sql1 + where + orderby;
+        int lastIndex = startIndex + maxResult;
+        String beforeSql = "SELECT " + columns + " FROM (  SELECT S1.*, ROWNUM RNUM  FROM  (";
+        String afterSql = " ) S1  WHERE ROWNUM < " + lastIndex + ") WHERE RNUM >= " + startIndex;
+        // String rowlimit = " ROWNUM BETWEEN " + startIndex + " AND " + maxResult;
+        String sql = beforeSql + sql1 + where + orderby + afterSql;
 
         //log.info(sql);
+        System.out.println(sql);
 
         Statement stmt;
         try {

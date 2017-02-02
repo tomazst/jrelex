@@ -50,14 +50,14 @@ import com.panemu.tiwulfx.table.CheckBoxColumn;
 import com.panemu.tiwulfx.table.DateColumn;
 import com.panemu.tiwulfx.table.NumberColumn;
 import com.panemu.tiwulfx.table.TableControl;
-import com.panemu.tiwulfx.table.TableController;
 import com.panemu.tiwulfx.table.TextColumn;
 
 /**
  *
  * @author tomaz
  *
- * @param <V> Type of table cell value
+ * @param <V>
+ *            Type of table cell value
  */
 public class DatabaseExplorerTab<V> {
 
@@ -66,65 +66,45 @@ public class DatabaseExplorerTab<V> {
 
     private Tab tab;
 
-    public DatabaseExplorerTab(TabPane tabPaneExploreDatabases,
-            Connection conn,
-            CTable table,
-            String databaseName,
+    public DatabaseExplorerTab(TabPane tabPaneExploreDatabases, Connection conn, CTable table, String databaseName,
             String storedDatabaseName) {
         this.showTable(tabPaneExploreDatabases, conn, table, databaseName, storedDatabaseName, null);
     }
 
-    public DatabaseExplorerTab(TabPane tabPaneExploreDatabases,
-            Connection conn,
-            CTable table,
-            String databaseName,
-            String storedDatabaseName,
-            List<TableCriteria<V>> filteredColumns) {
+    public DatabaseExplorerTab(TabPane tabPaneExploreDatabases, Connection conn, CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria<V>> filteredColumns) {
         this.showTable(tabPaneExploreDatabases, conn, table, databaseName, storedDatabaseName, filteredColumns);
     }
 
-    public void showTable(TabPane tabPaneExploreDatabases,
-            Connection conn,
-            CTable table,
-            String databaseName,
-            String storedDatabaseName,
-            List<TableCriteria<V>> filteredColumns
-    ) {
+    public void showTable(TabPane tabPaneExploreDatabases, Connection conn, CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria<V>> filteredColumns) {
 
         Object obj = Common.getInstance().getPojoGenerator().createPojoForTable(table.getName(), table);
 
         // create table
         exploreTable = new TableControl<>(obj.getClass());
         exploreTable.setVisibleComponents(false, TableControl.Component.BUTTON_EDIT,
-                TableControl.Component.BUTTON_DELETE,
-                TableControl.Component.BUTTON_SAVE,
-                TableControl.Component.BUTTON_INSERT,
-                TableControl.Component.BUTTON_RELOAD
-        );
+                TableControl.Component.BUTTON_DELETE, TableControl.Component.BUTTON_SAVE,
+                TableControl.Component.BUTTON_INSERT, TableControl.Component.BUTTON_RELOAD);
 
         exploreTable.getTableView().setId(table.getName());
 
         try {
             // get data controller
             DatabaseTableController controller = null;
-            controller = new DatabaseTableController(exploreTable,
-                    conn, databaseName, obj, table, storedDatabaseName);
+            controller = new DatabaseTableController(exploreTable, conn, databaseName, obj, table, storedDatabaseName);
 
             if (filteredColumns != null) {
                 controller.setFilteredColumns(filteredColumns);
             }
 
             exploreTable.setController(controller);
-        }
-        catch(JRelExException e){
+        } catch (JRelExException e) {
             LOG.error(e.getMessage(), e);
             MessageDialogBuilder.error(e).show(null);
         }
 
-
-
-        Map<String, Class<?>> tableProperties = Common.getInstance().getPojoGenerator()
-                .getLastPojoProperties();
+        Map<String, Class<?>> tableProperties = Common.getInstance().getPojoGenerator().getLastPojoProperties();
 
         // Adding table columns
         // first is column for position numbering
@@ -145,7 +125,7 @@ public class DatabaseExplorerTab<V> {
         // Second is column for references
         BaseColumn referCol = new BaseColumn("references", 30);
         referCol.setId("references");
-        referCol.setCellFactory((Callback<TableColumn, TableCell>)(TableColumn col) -> {
+        referCol.setCellFactory((Callback<TableColumn, TableCell>) (TableColumn col) -> {
             return new ReferencesCell<>();
         });
 
@@ -164,53 +144,43 @@ public class DatabaseExplorerTab<V> {
             Class clazz = tableProperties.get(column.getName());
             BaseColumn col = null;
 
-            if (clazz.equals(Integer.class) || clazz.equals(Float.class)
-                    || clazz.equals(Double.class) || clazz.equals(Float.class)) {
+            if (clazz.equals(Integer.class) || clazz.equals(Float.class) || clazz.equals(Double.class)
+                    || clazz.equals(Float.class)) {
                 col = (BaseColumn) new NumberColumn(column.getName(), clazz);
                 col.setFilterable(true);
-            }
-            else if (clazz.equals(Date.class)) {
+            } else if (clazz.equals(Date.class)) {
                 DateColumn dateCol = new DateColumn(column.getName());
                 dateCol.setDateFormat(new SimpleDateFormat("yyyy-MM-dd"));
                 col = (BaseColumn) dateCol;
                 col.setId("dateColumn");
                 col.setFilterable(true);
-            }
-            else if (clazz.equals(Boolean.class)) {
+            } else if (clazz.equals(Boolean.class)) {
                 CheckBoxColumn<? extends Object> chkCol = new CheckBoxColumn<>(column.getName());
                 col = (BaseColumn) chkCol;
                 col.setFilterable(true);
-            }
-            else {
+            } else {
                 col = (BaseColumn) new TextColumn(column.getName());
                 col.setFilterable(true);
             }
 
             if (column.isPrimaryKey()) {
-                col.setGraphic(new ImageView(
-                        new Image(getClass().getResourceAsStream(
-                                        "/images/primary-key.png"))
-                ));
+                col.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/primary-key.png"))));
             }
             if (column.isForeignKey()) {
-                col.setGraphic(new ImageView(
-                        new Image(getClass().getResourceAsStream(
-                                        "/images/foreign-keys.png"))
-                ));
+                col.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/images/foreign-keys.png"))));
             }
 
             exploreTable.addColumn(col);
 
         }
 
-        //exploreTable.getSelectionModel().cellSelectionEnabledProperty().unbind();
-        //exploreTable.getSelectionModel().setCellSelectionEnabled(true);
-                //exploreTable.setSelectionMode();
-        //exploreTable.setSelectionMode(SelectionMode.MULTIPLE);
-        exploreTable.setMaxRecord(Common.getInstance().getDbstore()
-                .getAppSettings().getNumberRowsToDisplay());
+        // exploreTable.getSelectionModel().cellSelectionEnabledProperty().unbind();
+        // exploreTable.getSelectionModel().setCellSelectionEnabled(true);
+        // exploreTable.setSelectionMode();
+        // exploreTable.setSelectionMode(SelectionMode.MULTIPLE);
+        exploreTable.setMaxRecord(Common.getInstance().getDbstore().getAppSettings().getNumberRowsToDisplay());
         exploreTable.reloadFirstPage();
-                //exploreTable.setAgileEditing(true);
+        // exploreTable.setAgileEditing(true);
 
         String text = table.getName();
         tab = Common.getInstance().tabExists(text, tabPaneExploreDatabases);
@@ -220,9 +190,9 @@ public class DatabaseExplorerTab<V> {
             tabPaneExploreDatabases.getTabs().add(tab);
         }
 
-        //exploreTable.getTableView().setOnMouseReleased(tableRightClickListener);
+        // exploreTable.getTableView().setOnMouseReleased(tableRightClickListener);
         tab.setContent(exploreTable);
-        //tabPaneExploreDatabases.getSelectionModel().select(tab);
+        // tabPaneExploreDatabases.getSelectionModel().select(tab);
 
     }
 
@@ -234,13 +204,15 @@ public class DatabaseExplorerTab<V> {
                     return;
                 }
                 System.out.println("HMMM!");
-                System.out.println(exploreTable.getTableView().getSelectionModel().getSelectedCells().get(0).getClass());
+                System.out
+                        .println(exploreTable.getTableView().getSelectionModel().getSelectedCells().get(0).getClass());
 
                 TablePosition pos = exploreTable.getTableView().getSelectionModel().getSelectedCells().get(0);
 
                 System.out.println(pos.getTableColumn().getClass());
 
-                if (pos.getTableColumn() instanceof TableColumn) { // BaseColumn) {
+                if (pos.getTableColumn() instanceof TableColumn) { // BaseColumn)
+                                                                   // {
                     System.out.println("Kliknil si miško!");
                 }
             }

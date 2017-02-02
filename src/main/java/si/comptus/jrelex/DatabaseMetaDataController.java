@@ -857,4 +857,13 @@ public class DatabaseMetaDataController implements Initializable {
         }
     }
 
+    public final void updateCbDatabase() {
+        this.cbDatabase.setValue(this.txfSID.getText());
+        this.txfSID.positionCaret(this.txfSID.getText().length());
+    }
+
+    public final void updateTxfSID() {
+        this.txfSID.setText(this.cbDatabase.getValue());
+    }
+
 }
