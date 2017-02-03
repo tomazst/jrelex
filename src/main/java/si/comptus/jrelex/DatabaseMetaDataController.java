@@ -289,7 +289,8 @@ public class DatabaseMetaDataController implements Initializable {
         this.cbDbms.setValue("NONE");
         this.txfName.setText("");
         this.txfHostname.setText("");
-        this.cbPort.setValue("0000");
+        this.cbPort.setValue("");
+        this.cbPort.promptTextProperty().setValue("0000");
         this.txfUsername.setText("");
         this.cbDatabase.setValue("");
         this.pwfPassword.setText("");
