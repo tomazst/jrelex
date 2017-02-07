@@ -24,6 +24,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -126,17 +127,17 @@ public class DatabaseTableController<T, V> extends TableController<T> {
             filteredColumnsG.add((TableCriteria<V>)criteria);
         }
 
-        ResultSet rs = this.dq.getTableData(databaseTable, databaseName,
+        String sql = this.dq.getSqlForTableData(databaseTable, databaseName,
                 this.storedDatabaseName, filteredColumnsG, sortedColumns,
                 sortingOrders, startIndex, maxResult);
 
         ArrayList<T> data = new ArrayList<>();
-
         int position = startIndex;
-        // table data
-        // ResultSet rs = rc.intoResultSet();
-        // rc = null;
-        try {
+
+        try (Statement stmt = Common.getInstance().getDatabaseInteraction()
+                .getConnection(this.storedDatabaseName).createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+
             ResultSetMetaData rsmd = rs.getMetaData();
 
             // we get number of referenced columns (primary and foreign) for
@@ -154,6 +155,7 @@ public class DatabaseTableController<T, V> extends TableController<T> {
             int maxPositionStringLength = maxPosition.toString().length();
 
             int n = 0;
+
             while (rs.next()) { // table row
                 T obj = null;
                 HashMap<String, CColumnTableReferences> references = new HashMap<>(count);
@@ -261,11 +263,9 @@ public class DatabaseTableController<T, V> extends TableController<T> {
                 n++;
             }
 
-            rs.close();
-
-        } catch (SQLException ex) {
-            log.error(ex.getMessage(), ex);
-            MessageDialogBuilder.error(ex).show(null);
+        } catch (SQLException e) {
+            log.error(e.getMessage(), e);
+            MessageDialogBuilder.error(e).show(null);
         }
 
         int countAll = dq.getRecordCount(databaseTable, databaseName,

@@ -16,7 +16,7 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-package si.comptus.jrelex;
+package si.comptus.jrelex.database;
 
 //import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 //import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
@@ -41,6 +41,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import si.comptus.jrelex.Common;
+import si.comptus.jrelex.DatabaseConnDataVO;
 import si.comptus.jrelex.configuration.RDBMSType;
 
 /**

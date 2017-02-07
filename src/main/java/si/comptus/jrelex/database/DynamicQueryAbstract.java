@@ -83,7 +83,7 @@ public abstract class DynamicQueryAbstract<T> {
             String storedDatabaseName, String databaseName, String tableName,
             CColumn column, String value);
 
-    abstract public ResultSet getTableData(CTable table,
+    abstract public String getSqlForTableData(CTable table,
             String databaseName,
             String storedDatabaseName,
             List<TableCriteria<T>> filteredColumns,
@@ -92,7 +92,7 @@ public abstract class DynamicQueryAbstract<T> {
             int startIndex,
             int maxResult);
 
-    abstract public ResultSet getTableData(CTable table,
+    abstract public String getSqlForTableData(CTable table,
             String databaseName,
             String storedDatabaseName,
             List<TableCriteria<T>> filteredColumns);

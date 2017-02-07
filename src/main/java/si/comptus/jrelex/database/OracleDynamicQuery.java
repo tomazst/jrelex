@@ -67,26 +67,21 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         this.conn = conn;
     }
 
-    public ResultSet getTableData(CTable table, String databaseName,
+    public String getSqlForTableData(CTable table, String databaseName,
             String storedDatabaseName, List<TableCriteria<T>> filteredColumns,
             List<String> sortedColumns,
             List<TableColumn.SortType> sortingOrders, int startIndex,
             int maxResult) {
-        ResultSet rs = null;
 
         String orderby = null;
-
         startIndex++;
-
         String firstColName = table.getColumnNames().get(0);
         orderby = " ORDER BY " + firstColName;
-
         if (sortedColumns != null) {
             if (sortedColumns.size() != 0) {
                 orderby = sorts(sortedColumns, sortingOrders);
             }
         }
-
         ArrayList<String> cols = new ArrayList<String>();
         for (CColumn col : table.getColumns()) {
             cols.add(col.getName());
@@ -108,22 +103,12 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         String sql = beforeSql + sql1 + where + orderby + afterSql;
 
         log.debug(sql);
-
-        Statement stmt;
-        try {
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
-        } catch (SQLException e) {
-            log.error("Error: ", e);
-            MessageDialogBuilder.error(e).show(null);
-        }
-
-        return rs;
+        return sql;
     }
 
-    public ResultSet getTableData(CTable table, String databaseName,
+    public String getSqlForTableData(CTable table, String databaseName,
             String storedDatabaseName, List<TableCriteria<T>> filteredColumns) {
-        return getTableData(table, databaseName, storedDatabaseName,
+        return getSqlForTableData(table, databaseName, storedDatabaseName,
                 filteredColumns, null, null, 0, 0);
     }
 

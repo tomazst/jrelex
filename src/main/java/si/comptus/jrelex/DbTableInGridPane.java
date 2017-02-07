@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -66,6 +67,7 @@ public class DbTableInGridPane {
         super();
 
         this.referedColumn = referedColumn;
+        this.storedDatabaseName = storedDatabaseName;
 
         RDBMSType vendor = Common.getInstance().getDbstore().getDatabases()
                 .get(storedDatabaseName).getConnBean().getDriver();
@@ -169,11 +171,15 @@ public class DbTableInGridPane {
 
         rowNumber++;
 
-        ResultSet rs = this.dq.getTableData(table, databaseName,
+        String sql = this.dq.getSqlForTableData(table, databaseName,
                 this.storedDatabaseName, filteredColumns);
 
+
         ResultSetMetaData rsmd;
-        try {
+        try (Statement stmt = Common.getInstance().getDatabaseInteraction()
+                .getConnection(this.storedDatabaseName).createStatement();
+                ResultSet rs = stmt.executeQuery(sql);)
+        {
             rsmd = rs.getMetaData();
 
             while (rs.next()) { // table row

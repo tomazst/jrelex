@@ -67,7 +67,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         this.conn = conn;
     }
 
-    public ResultSet getTableData(CTable table,
+    public String getSqlForTableData(CTable table,
                                         String databaseName,
                                         String storedDatabaseName,
                                         List<TableCriteria<T>> filteredColumns,
@@ -76,8 +76,6 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
                                         int startIndex,
                                         int maxResult)
     {
-        ResultSet rs = null;
-
         ArrayList<String> cols = new ArrayList<String>();
         for(CColumn col : table.getColumns()){
             // user can select to see column
@@ -100,29 +98,15 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         }
 
         log.debug(sql);
-
-        Statement stmt;
-        try {
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
-            /*while(rs.next()){
-                log.info("Value "+rs.getInt(1));
-            }*/
-            rs.beforeFirst();
-        } catch (SQLException e) {
-            log.error("Error: ", e);
-            MessageDialogBuilder.error(e).show(null);
-        }
-
-        return rs;
+        return sql;
     }
 
-    public ResultSet getTableData(CTable table,
+    public String getSqlForTableData(CTable table,
             String databaseName,
             String storedDatabaseName,
             List<TableCriteria<T>> filteredColumns)
     {
-        return getTableData(table, databaseName, storedDatabaseName, filteredColumns, null, null, 0, 0);
+        return getSqlForTableData(table, databaseName, storedDatabaseName, filteredColumns, null, null, 0, 0);
     }
 
     private String sorts(List<String> sortedColumns,

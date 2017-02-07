@@ -49,6 +49,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import si.comptus.jrelex.container.CDatabaseStore;
+import si.comptus.jrelex.database.DatabaseInteraction;
 
 /**
  *

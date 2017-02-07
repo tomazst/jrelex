@@ -67,13 +67,12 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         this.conn = conn;
     }
 
-    public ResultSet getTableData(CTable table, String databaseName,
+    public String getSqlForTableData(CTable table, String databaseName,
             String storedDatabaseName, List<TableCriteria<T>> filteredColumns,
             List<String> sortedColumns,
             List<TableColumn.SortType> sortingOrders, int startIndex,
-            int maxResult) {
-        ResultSet rs = null;
-
+            int maxResult)
+    {
         String orderby = null;
 
         String firstColName = table.getColumnNames().get(0);
@@ -107,22 +106,12 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         String sql = sql1 + sql2 + sql3;
 
         log.debug(sql);
-
-        Statement stmt;
-        try {
-            stmt = conn.createStatement();
-            rs = stmt.executeQuery(sql);
-        } catch (SQLException e) {
-            log.error("Error: ", e);
-            MessageDialogBuilder.error(e).show(null);
-        }
-
-        return rs;
+        return sql;
     }
 
-    public ResultSet getTableData(CTable table, String databaseName,
+    public String getSqlForTableData(CTable table, String databaseName,
             String storedDatabaseName, List<TableCriteria<T>> filteredColumns) {
-        return getTableData(table, databaseName, storedDatabaseName,
+        return getSqlForTableData(table, databaseName, storedDatabaseName,
                 filteredColumns, null, null, 0, 0);
     }
 
