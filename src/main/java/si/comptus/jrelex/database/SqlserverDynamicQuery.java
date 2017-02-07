@@ -106,7 +106,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = sql1 + sql2 + sql3;
 
-        // log.info(sql);
+        log.debug(sql);
 
         Statement stmt;
         try {
@@ -155,6 +155,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = "SELECT COUNT(*) as c FROM [" + databaseName + "].dbo."
                 + table.getName() + " " + getWhere(table, filteredColumns);
+        log.debug(sql);
         Statement stmt = null;
         int count = 0;
         try {
@@ -345,7 +346,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         try {
             Statement stmt = conn.createStatement();
             String sql = "SELECT " + StringUtils.join(subQrys, ",");
-            // log.info(sql);
+            log.debug(sql);
             ResultSet rs = stmt.executeQuery(sql);
             rs.next();
 

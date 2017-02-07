@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.TreeMap;
 
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -146,7 +147,7 @@ public class DatabaseExplorerController implements Initializable {
         }
     }
 
-    public void reloadDatabaseTree(MouseEvent event) {
+    public void reloadDatabaseTree(ActionEvent event) {
         this.DBFilterValue = txtDatabaseFilter.getText();
         this.TBLFilterValue = txtTableFilter.getText();
         this.refreshTreeViewDatabaseList(Common.getInstance()

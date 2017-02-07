@@ -126,53 +126,6 @@ public class DatabaseTableController<T, V> extends TableController<T> {
             filteredColumnsG.add((TableCriteria<V>)criteria);
         }
 
-
-        /*
-        // Hack - adding icons for foreign and primary keys
-        for (TableColumn<T, ?> col : exploreTable.getTableView().getColumns()) { // go
-                                                                                            // throo
-                                                                                            // all
-                                                                                            // columns
-                                                                                            // of
-                                                                                            // tableview
-                    //TableColumn<T, ?> col = obj;
-
-                    CColumn column = databaseTable.getColumnByName(col.getText()); // get
-                                                                                    // database
-                                                                                    // data
-                                                                                    // for
-                                                                                    // table
-                                                                                    // column
-
-                    if (column.isForeignKey() || column.isPrimaryKey()) {
-
-                        boolean filterIsSet = false;
-                        for (TableCriteria<T> criteria : filteredColumns) {
-                            if (criteria.getAttributeName().equals(column.getName())) {
-                                filterIsSet = true;
-                            }
-                        }
-
-                        if (filterIsSet) {
-                            continue;
-                        }
-
-                        if (column.isPrimaryKey()) {
-                            col.setGraphic(new ImageView(
-                                    new Image(getClass().getResourceAsStream(
-                                            "/images/primary-key.png"))
-                                    ));
-                        }
-                        if (column.isForeignKey()) {
-                            col.setGraphic(new ImageView(
-                                    new Image(getClass().getResourceAsStream(
-                                            "/images/foreign-keys.png"))
-                                    ));
-                        }
-
-                    }
-                }
-         */
         ResultSet rs = this.dq.getTableData(databaseTable, databaseName,
                 this.storedDatabaseName, filteredColumnsG, sortedColumns,
                 sortingOrders, startIndex, maxResult);

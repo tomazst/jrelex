@@ -105,11 +105,9 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         int lastIndex = startIndex + maxResult;
         String beforeSql = "SELECT " + columns + " FROM (  SELECT S1.*, ROWNUM RNUM  FROM  (";
         String afterSql = " ) S1  WHERE ROWNUM < " + lastIndex + ") WHERE RNUM >= " + startIndex;
-        // String rowlimit = " ROWNUM BETWEEN " + startIndex + " AND " + maxResult;
         String sql = beforeSql + sql1 + where + orderby + afterSql;
 
-        //log.info(sql);
-        System.out.println(sql);
+        log.debug(sql);
 
         Statement stmt;
         try {
@@ -158,6 +156,7 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = "SELECT COUNT(*) as c FROM "
                 + table.getName() + " " + getWhere(table, filteredColumns);
+        log.debug(sql);
         Statement stmt = null;
         int count = 0;
         try {
@@ -348,7 +347,7 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         try {
             Statement stmt = conn.createStatement();
             String sql = "SELECT " + StringUtils.join(subQrys, ",") + " FROM DUAL";
-            //log.info(sql);
+            log.debug(sql);
             ResultSet rs = stmt.executeQuery(sql);
             rs.next();
 

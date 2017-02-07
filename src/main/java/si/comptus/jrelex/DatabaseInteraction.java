@@ -64,8 +64,6 @@ public class DatabaseInteraction {
      * @return
      */
     public Connection getConnection(String connectionName) {
-        // JOptionPane.showMessageDialog(null,
-        // "Odpira oz išče povezavo na: "+connectionName);
         if (this.conections.get(connectionName) == null) {
             DataSource dataSource = null;
             ConnBean bean = Common.getInstance().getDbstore().getDatabases()
@@ -98,6 +96,22 @@ public class DatabaseInteraction {
      * @param port
      * @param user
      * @param password
+     * @return
+     * @throws Exception
+     */
+    public DataSource getDataSource(RDBMSType driver, String servername, int port,
+            String user, String password, String orclDriver) throws SQLException {
+        return this.getDataSource(driver, servername, port, user, password, orclDriver, null, null);
+    }
+
+    /**
+     * Generates the data source for database.
+     *
+     * @param driver
+     * @param servername
+     * @param port
+     * @param user
+     * @param password
      * @param database
      * @return
      * @throws Exception
@@ -120,35 +134,6 @@ public class DatabaseInteraction {
                 return null;
         }
 
-    }
-
-    /**
-     * Generates the data source for database.
-     *
-     * @param driver
-     * @param servername
-     * @param port
-     * @param user
-     * @param password
-     * @return
-     * @throws Exception
-     */
-    public DataSource getDataSource(RDBMSType driver, String servername, int port,
-            String user, String password, String orclDriver) throws SQLException {
-
-        switch (driver) {
-            case MSSQL:
-                return (DataSource) this.getMSSqlDataSource(servername, port,
-                        user, password, null);
-            case MYSQL:
-                return (DataSource) this.getMySqlDataSource(servername, port,
-                        user, password, null);
-            case ORACLE:
-                return (DataSource) this.getOraclelDataSource(servername, port,
-                        user, password, null, null, orclDriver);
-            default:
-                return null;
-        }
     }
 
     private MysqlDataSource getMySqlDataSource(String servername, int port,
@@ -214,17 +199,19 @@ public class DatabaseInteraction {
                 connVO.getOrclDriver()
         );
 
-        ResultSet dbs;
         if (connVO.getDriver().equalsIgnoreCase("oracle")) {
-            dbs = ds.getConnection().getMetaData().getSchemas();
+            try(ResultSet dbs = ds.getConnection().getMetaData().getSchemas()){
+                while (dbs.next()) {
+                    databaseList.add(dbs.getString(1));
+                }
+            }
         } else {
-            dbs = ds.getConnection().getMetaData().getCatalogs();
+            try(ResultSet dbs = ds.getConnection().getMetaData().getCatalogs()){
+                while (dbs.next()) {
+                    databaseList.add(dbs.getString(1));
+                }
+            }
         }
-
-        while (dbs.next()) {
-            databaseList.add(dbs.getString(1));
-        }
-
         return databaseList;
     }
 

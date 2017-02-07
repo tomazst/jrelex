@@ -85,9 +85,9 @@ public class MainApp extends Application {
             final BorderPane rootNode = (BorderPane) loader.load(getClass()
                     .getResourceAsStream(fxmlFile));
             final Scene scene = new Scene(rootNode);
-            scene.getStylesheets().add("styles/tiwulfx.css");
-            scene.getStylesheets().add("styles/styles.css");
-                //TiwulFXUtil.setTiwulFXStyleSheet(scene);
+            scene.getStylesheets().add("/tiwulfx.css");
+            scene.getStylesheets().add("/styles/styles.css");
+            //TiwulFXUtil.setTiwulFXStyleSheet(scene);
 
             stage.setTitle("JRelEx");
             stage.setScene(scene);

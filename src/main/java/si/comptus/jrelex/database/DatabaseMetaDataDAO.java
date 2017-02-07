@@ -71,25 +71,16 @@ public class DatabaseMetaDataDAO {
         this.databaseContainer = new CDatabase();
         this.databaseContainer.setConnBean(bean);
 
-        this.databaseContainer.setTables(
-                new HashMap<String, CTable>(
-                        this.getTableCount()
-                )
-        );
+        this.databaseContainer.setTables(new HashMap<String, CTable>(this.getTableCount()));
 
     }
 
-    public JRelExIterator<CTable> Iterator() throws SQLException{
-        String[] types = {"TABLE"};
+    public JRelExIterator<CTable> Iterator() throws SQLException {
+        String[] types = { "TABLE" };
         this.resultSetTables = this.metaData.getTables(this.catalog, null, null, types);
 
-        return new DatabaseMetaDataDAO.TableIterator(
-                this.resultSetTables,
-                this.databaseContainer,
-                this.metaData,
-                this.catalog,
-                this.shema
-            );
+        return new DatabaseMetaDataDAO.TableIterator(this.resultSetTables, this.databaseContainer, this.metaData,
+                this.catalog, this.shema);
     }
 
     public CDatabase getDatabaseContainer() {
@@ -109,25 +100,23 @@ public class DatabaseMetaDataDAO {
     }
 
     public int getTableCount() throws SQLException {
-        if(this.tableCount == 0) {
+        if (this.tableCount == 0) {
             this.tableCount = this.countTables();
         }
         return tableCount;
     }
 
-    public ResultSet getResultSetTables(){
+    public ResultSet getResultSetTables() {
         return resultSetTables;
     }
 
     private int countTables() throws SQLException {
 
         int tableCount = 0;
-        final String[] types = {"TABLE"};
-
-        ResultSet resultSetTables = null;
-        try {
-            resultSetTables = this.getMetaData().getTables(
-                    this.catalog, null, null, types);
+        final String[] types = { "TABLE" };
+        try (ResultSet resultSetTables = this.getMetaData()
+                .getTables(this.catalog, null, null, types)
+                ) {
 
             while (resultSetTables.next()) {
                 // we check if user has access. MSSQL has always dbo.
@@ -137,7 +126,7 @@ public class DatabaseMetaDataDAO {
                         continue;
                     }
                 }
-                //we check if is table
+                // we check if is table
                 String TYPE = resultSetTables.getString(4);
                 if (!TYPE.equals("TABLE")) {
                     continue;
@@ -149,10 +138,6 @@ public class DatabaseMetaDataDAO {
                     }
                 }
                 tableCount++;
-            }
-        } finally {
-            if (resultSetTables != null) {
-                resultSetTables.close();
             }
         }
         return tableCount;
@@ -170,11 +155,8 @@ public class DatabaseMetaDataDAO {
 
         private ArrayList<CReference> tempReferences = new ArrayList<CReference>();
 
-        public TableIterator(ResultSet resultSetTables,
-                    CDatabase databaseContainer,
-                    DatabaseMetaData metaData,
-                    String catalog,
-                    String shema) throws SQLException {
+        public TableIterator(ResultSet resultSetTables, CDatabase databaseContainer, DatabaseMetaData metaData,
+                String catalog, String shema) throws SQLException {
 
             this.resultSetTables = resultSetTables;
             this.databaseContainer = databaseContainer;
@@ -182,7 +164,7 @@ public class DatabaseMetaDataDAO {
             this.catalog = catalog;
             this.shema = shema;
 
-            //resultSetTables.beforeFirst(); // dela le z mysql resultset
+            // resultSetTables.beforeFirst(); // dela le z mysql resultset
 
         }
 
@@ -193,8 +175,7 @@ public class DatabaseMetaDataDAO {
                 if (this.resultSetTables.isAfterLast()) {
                     hasNext = false;
                 }
-            }
-            finally {
+            } finally {
                 return hasNext;
             }
         }
@@ -220,8 +201,7 @@ public class DatabaseMetaDataDAO {
                     }
                 }
 
-            }
-            catch (SQLException e) {
+            } catch (SQLException e) {
                 LOG.error(e.getMessage(), e);
             }
             return table;
@@ -249,7 +229,7 @@ public class DatabaseMetaDataDAO {
                 }
             }
 
-            //we check if is table
+            // we check if is table
             String TYPE = resultSetTables.getString(4);
             if (!TYPE.equals("TABLE")) {
                 return false;
@@ -267,31 +247,22 @@ public class DatabaseMetaDataDAO {
 
         private int countTableColumns(String tableName) throws SQLException {
             int initialSize = 0;
-            ResultSet resultSetColumns = null;
-            try {
-                resultSetColumns = this.metaData.getColumns(
-                        this.catalog,
-                        this.shema, tableName, null);
+            try (ResultSet resultSetColumns = this.metaData
+                    .getColumns(this.catalog, this.shema, tableName, null)
+                    ) {
                 // get initial size for columns
                 while (resultSetColumns.next()) {
                     initialSize++;
-                }
-            } finally {
-                if (resultSetColumns != null) {
-                    resultSetColumns.close();
                 }
             }
             return initialSize;
         }
 
         private void addColumns(CTable table) throws SQLException {
-            ResultSet resultSetColumns = null;
-            try {
-                resultSetColumns = this.metaData.getColumns(
-                        this.catalog,
-                        this.shema, table.getName(), null
-                );
 
+            try (ResultSet resultSetColumns = this.metaData
+                    .getColumns(this.catalog, this.shema, table.getName(), null)
+                    ) {
                 int colCount = this.countTableColumns(table.getName());
                 table.setColumns(new ArrayList<CColumn>(colCount));
                 table.setColumnNames(new ArrayList<String>(colCount));
@@ -299,43 +270,38 @@ public class DatabaseMetaDataDAO {
                 while (resultSetColumns.next()) {
                     CColumn column = table.getNewColumnInstance();
 
-                    column.setName(resultSetColumns.getString(4)); // column name
+                    column.setName(resultSetColumns.getString(4)); // column
+                                                                   // name
                     Integer type = resultSetColumns.getInt(5);
-                    column.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column type
+                    column.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column
+                                                                                            // type
 
                     table.getColumns().add(column);
                     table.getColumnNames().add(column.getName());
                 }
-            } finally {
-                if (resultSetColumns != null) {
-                    resultSetColumns.close();
-                }
             }
         }
 
-        private void setPrimaryKeys(CTable table) throws SQLException{
+        private void setPrimaryKeys(CTable table) throws SQLException {
             // we add primary key info
-            ResultSet resultSetPrimaryKeys = this.metaData
-                    .getPrimaryKeys(this.catalog, null, table.getName());
-            try {
+            try (ResultSet resultSetPrimaryKeys = this.metaData
+                    .getPrimaryKeys(this.catalog, null, table.getName())
+                    ) {
                 while (resultSetPrimaryKeys.next()) {
                     String columnName = resultSetPrimaryKeys.getString(4);
                     table.getColumnByName(columnName).setPrimaryKey(true);
                 }
-            } finally {
-                resultSetPrimaryKeys.close();
             }
         }
 
         private void setExportedKeys(CTable table) throws SQLException {
-            ResultSet resultExportedKeys = this.metaData
-                    .getExportedKeys(this.catalog, null, table.getName());
-            try {
+            try (ResultSet resultExportedKeys = this.metaData
+                    .getExportedKeys(this.catalog, null, table.getName())
+                    ) {
                 while (resultExportedKeys.next()) {
                     String pKColumnName = resultExportedKeys.getString(4);
 
-                    CReference creference = table.getColumnByName(pKColumnName)
-                            .getNewReferenceInstance();
+                    CReference creference = table.getColumnByName(pKColumnName).getNewReferenceInstance();
                     creference.setTable(resultExportedKeys.getString(3)); // pktable_name
                     creference.setColumn(pKColumnName); // pkcolum_name
                     creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
@@ -343,27 +309,24 @@ public class DatabaseMetaDataDAO {
 
                     this.tempReferences.add(creference);
 
-                    //ctable.getColumnByName(pKColumnName).setForeignKey(true);
+                    // ctable.getColumnByName(pKColumnName).setForeignKey(true);
                     if (table.getColumnByName(pKColumnName).getReferences() == null) {
                         table.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
                     }
                     table.getColumnByName(pKColumnName).getReferences().add(creference);
                 }
-            } finally {
-                resultExportedKeys.close();
             }
         }
 
         private void setImportedKeys(CTable table) throws SQLException {
-            ResultSet resultImportedKeys = this.metaData
-                    .getImportedKeys(this.catalog, null, table.getName());
-            try {
+            try (ResultSet resultImportedKeys = this.metaData
+                    .getImportedKeys(this.catalog, null, table.getName())
+                    ) {
                 while (resultImportedKeys.next()) {
                     String pKColumnName = resultImportedKeys.getString(4);
                     String fKColumnName = resultImportedKeys.getString(8);
 
-                    CReference creference = table.getColumnByName(fKColumnName)
-                            .getNewReferenceInstance();
+                    CReference creference = table.getColumnByName(fKColumnName).getNewReferenceInstance();
                     creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
                     creference.setReferencedColumn(pKColumnName); // pkcolum_name
                     creference.setTable(resultImportedKeys.getString(7)); // fktable_name
@@ -378,8 +341,6 @@ public class DatabaseMetaDataDAO {
                     }
                     table.getColumnByName(fKColumnName).getReferences().add(creference);
                 }
-            } finally {
-                resultImportedKeys.close();
             }
         }
 

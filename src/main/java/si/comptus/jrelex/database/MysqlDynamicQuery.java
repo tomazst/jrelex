@@ -99,7 +99,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
             sql += " LIMIT "+startIndex+", "+maxResult;
         }
 
-        //log.info(sql);
+        log.debug(sql);
 
         Statement stmt;
         try {
@@ -154,6 +154,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = "SELECT COUNT(*) as c FROM "+databaseName+"."
                 +table.getName()+" "+getWhere(table, filteredColumns);
+        log.debug(sql);
         Statement stmt=null;
         int count=0;
         try {
@@ -256,15 +257,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         }
         return conditions;
     }
-/*
-    private void displaySql(String sql){
-        TextField txtField = new TextField();
-        //where.orderBy(this.sorts(sortedColumns, sortingOrders)).getSQL();
-        txtField.setText(sql);
-        txtField.setEditable(false);
-        //Common.getInstance().getBrowserController().titlePaneSQLView.setContent(txtField);
-    }
-*/
+
     @Override
     public HashMap<String, CReferenceData> getReferencedData(
             String storedDatabaseName, String databaseName, String tableName,
@@ -343,7 +336,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         try {
             Statement stmt = conn.createStatement();
             String sql = "SELECT " + StringUtils.join(subQrys, ",");
-            //log.info(sql);
+            log.debug(sql);
             ResultSet rs = stmt.executeQuery(sql);
             rs.next();
 
