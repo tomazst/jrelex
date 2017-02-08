@@ -1,3 +1,22 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package si.comptus.jrelex;
 
 import com.panemu.tiwulfx.common.TiwulFXUtil;
@@ -47,12 +66,12 @@ public class ExportToExcel<T> {
         int columnOffset = 0;
         int rowOffset = offset[0];
         System.out.println(header.toString());
-        
-        
+
+
         for (int i = 2; i < header.size(); i++) {
-            TableColumn column = header.get(i);
+            TableColumn<T, ?> column = header.get(i);
             int ix = i - 2;
-            
+
             if ((!(column instanceof BaseColumn) && column.getColumns().isEmpty()) || (!column.isVisible())) {
                 /**
                  * Skip column that is not BaseColumn and doesn't have inner
@@ -83,7 +102,7 @@ public class ExportToExcel<T> {
             return depth;
         }
         int result = depth;
-        for (TableColumn clm : column.getColumns()) {
+        for (TableColumn<T, ?> clm : column.getColumns()) {
             int newDepth = getHeaderDepth(clm, depth + 1);
             result = Math.max(result, newDepth);
         }
@@ -94,8 +113,8 @@ public class ExportToExcel<T> {
     public void export(String title, String targetFile, TableControl<T> tableControl, List<T> data, List<Double> columnWidths) throws Exception {
         int headerDepth = 1;
         List<TableColumn<T, ?>> lstColumn = tableControl.getTableView().getColumns();
-       
-        for (TableColumn column : lstColumn) {
+
+        for (TableColumn<T, ?> column : lstColumn) {
             int depth = getHeaderDepth(column, 1);
             headerDepth = Math.max(depth, headerDepth);
         }
@@ -121,11 +140,11 @@ public class ExportToExcel<T> {
 
         createHeader(sheet, lstColumn, rowIdx, 0, new int[]{headerDepth - 1, 0});
         List<TableColumn<T, ?>> lstLeafColumn = tableControl.getLeafColumns();
-       
+
         if (headerDepth > 1) {
             row = sheet.getRow(rowIdx + headerDepth - 1);
             int i = 0;
-            for (TableColumn column : lstLeafColumn) {
+            for (TableColumn<T, ?> column : lstLeafColumn) {
                 if (column.isVisible() && column instanceof BaseColumn) {
                     sheet.setColumnWidth(i, (int) (258 / 8 * column.getPrefWidth()));
                     cell = row.getCell(i);
@@ -143,17 +162,17 @@ public class ExportToExcel<T> {
         for (int i = 0; i < data.size(); i++) {
             row = sheet.createRow(rowIdx);
             int j = 0;
-            for (TableColumn column : lstLeafColumn) {
-            	           	
+            for (TableColumn<T, ?> column : lstLeafColumn) {
+
                 if (column instanceof BaseColumn && column.isVisible()) {
                     BaseColumn baseColumn = (BaseColumn) column;
                     String propertyName = baseColumn.getPropertyName();
-                    
-                    if(propertyName.equals("references") || 
-                    		propertyName.equals("position")){ // ignore first two columns
-                		continue;
-                	}
-                    
+
+                    if(propertyName.equals("references") ||
+                            propertyName.equals("position")){ // ignore first two columns
+                        continue;
+                    }
+
                     if (baseColumn instanceof LookupColumn) {
                         propertyName = propertyName + "." + ((LookupColumn) baseColumn).getLookupPropertyName();
                     }
@@ -168,7 +187,7 @@ public class ExportToExcel<T> {
                     } else {
                         value = PropertyUtils.getSimpleProperty(data.get(i), propertyName);
                     }
-                    
+
                     if (value instanceof Long || value instanceof Integer) {
                         cell.setCellStyle(csIntNum);
                         cell.setCellValue(Double.parseDouble(value.toString()));
@@ -187,7 +206,7 @@ public class ExportToExcel<T> {
         }
 
         writeFooter(sheet, rowIdx, data.size());
-        
+
         FileOutputStream fileOut;
         if (!targetFile.endsWith(".xls")) {
             targetFile = targetFile + ".xls";

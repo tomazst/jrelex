@@ -17,44 +17,41 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package si.comptus.jrelex.container;
-
-import java.io.Serializable;
-import java.util.HashMap;
+package si.comptus.jrelex;
 
 /**
- * 
+ * Application exception.
  * @author tomaz
  */
-public class CDatabaseStore implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1001L;
-	private HashMap<String, CDatabase> databases;
-	private CSettings appSettings;
+public class JRelExException extends Exception {
+    
+    private static final long serialVersionUID = 1997753363232807009L;
+    
+    /**
+     * Constructor.
+     */
+    public JRelExException() {
+        super();
+    }
 
-	public CDatabaseStore() {
-		this.databases = new HashMap<String, CDatabase>();
-		this.setAppSettings(new CSettings());
-	}
+    public JRelExException(String message)
+    {
+        super(message);
+    }
 
-	public HashMap<String, CDatabase> getDatabases() {
-		return databases;
-	}
+    public JRelExException(Throwable cause)
+    {
+        super(cause);
+    }
 
-	public void setDatabases(HashMap<String, CDatabase> databases) {
-		this.databases = databases;
-	}
+    public JRelExException(String message, Throwable cause)
+    {
+        super(message, cause);
+    }
 
-	public CSettings getAppSettings() {
-		return appSettings;
-	}
-
-	public void setAppSettings(CSettings appSettings) {
-		this.appSettings = appSettings;
-	}
-	
-	
-
+    public JRelExException(String message, Throwable cause, 
+                            boolean enableSuppression, boolean writableStackTrace)
+    {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

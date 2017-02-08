@@ -26,10 +26,10 @@
                         <TextField fx:id="txtDatabaseFilter" alignment="TOP_LEFT" onKeyReleased="#filterDatabasesFromTreeView" prefHeight="22.0" promptText="DB filter" style="-fx-font-size: 12" HBox.hgrow="ALWAYS" />
                         <ImageView id="imgViewTable" fx:id="imgViewTableFilter" />
                         <TextField fx:id="txtTableFilter" alignment="TOP_LEFT" onKeyReleased="#filterTablesFromTreeView" prefHeight="22.0" promptText="TBL filter" style="-fx-font-size: 12" HBox.hgrow="ALWAYS" />
-                        <Button styleClass="jrx-button">
+                        <Button styleClass="jrx-button" onAction="#reloadDatabaseTree">
                             <tooltip><Tooltip text="Reload"/></tooltip>
                             <graphic>
-                                <ImageView id="imgViewReload" fx:id="imgViewReloadDatabaseList" onMouseClicked="#reloadDatabaseTree" />
+                                <ImageView id="imgViewReload" fx:id="imgViewReloadDatabaseList" />
                             </graphic>
                         </Button>
                       </children>

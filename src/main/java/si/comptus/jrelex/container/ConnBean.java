@@ -1,100 +1,165 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// JRelEx: Java application is intended for searching data using database relations.
+// Copyright (C) 2015 tomazst <tomaz.stefancic@gmail.com>.
+//
+// This library is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+//
+// This library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public
+// License along with this library; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 package si.comptus.jrelex.container;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
+import si.comptus.jrelex.configuration.RDBMSType;
 
 /**
- * 
+ *
  * @author tomaz
  */
 public class ConnBean implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1007L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1007L;
 
-	private String name = "";
+    private String name = "";
 
-	private String driver = "";
+    private RDBMSType driver = RDBMSType.NONE;
 
-	private String hostname = "";
+    private String hostname = "";
 
-	private int port = 3306;
+    private int port = 3306;
 
-	private String username = "";
+    private String username = "";
 
-	private String password = "";
+    private String password = "";
 
-	private String database = "";
+    private String database = "";
 
-	private ArrayList<String> tables;
+    private String orclSID = "";
 
-	public String getDatabase() {
-		return database;
-	}
+    private String orclDriver = "";
 
-	public void setDatabase(String database) {
-		this.database = database;
-	}
 
-	public String getHostname() {
-		return hostname;
-	}
+    private ArrayList<String> tables;
 
-	public void setHostname(String hostname) {
-		this.hostname = hostname;
-	}
+    public String getDatabase() {
+        return database;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setDatabase(String database) {
+        this.database = database;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getHostname() {
+        return hostname;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public int getPort() {
-		return port;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setPort(int port) {
-		this.port = port;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public int getPort() {
+        return port;
+    }
 
-	public ArrayList<String> getTables() {
-		return tables;
-	}
+    public void setPort(int port) {
+        this.port = port;
+    }
 
-	public void setTables(ArrayList<String> tables) {
-		this.tables = tables;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getDriver() {
-		return driver;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setDriver(String driver) {
-		this.driver = driver;
-	}
+    public ArrayList<String> getTables() {
+        return tables;
+    }
+
+    public void setTables(ArrayList<String> tables) {
+        this.tables = tables;
+    }
+
+    public RDBMSType getDriver() {
+        return driver;
+    }
+
+    public void setDriver(RDBMSType driver) {
+        this.driver = driver;
+    }
+
+    public String getOrclSID() {
+        return orclSID;
+    }
+
+    public void setOrclSID(String orclSID) {
+        this.orclSID = orclSID;
+    }
+
+    public String getOrclDriver() {
+        return orclDriver;
+    }
+
+    public void setOrclDriver(String orclDriver) {
+        this.orclDriver = orclDriver;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 29 * hash + Objects.hashCode(this.name);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ConnBean other = (ConnBean) obj;
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        return true;
+    }
+
+
 
 }

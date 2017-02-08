@@ -17,44 +17,14 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package si.comptus.jrelex.container;
-
-import java.io.Serializable;
-import java.util.HashMap;
+package si.comptus.jrelex.configuration;
 
 /**
- * 
- * @author tomaz
+ *
+ * @author tomazst
  */
-public class CDatabaseStore implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1001L;
-	private HashMap<String, CDatabase> databases;
-	private CSettings appSettings;
+public enum RDBMSType {
 
-	public CDatabaseStore() {
-		this.databases = new HashMap<String, CDatabase>();
-		this.setAppSettings(new CSettings());
-	}
-
-	public HashMap<String, CDatabase> getDatabases() {
-		return databases;
-	}
-
-	public void setDatabases(HashMap<String, CDatabase> databases) {
-		this.databases = databases;
-	}
-
-	public CSettings getAppSettings() {
-		return appSettings;
-	}
-
-	public void setAppSettings(CSettings appSettings) {
-		this.appSettings = appSettings;
-	}
-	
-	
+    NONE, MSSQL, MYSQL, ORACLE;
 
 }

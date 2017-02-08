@@ -16,45 +16,29 @@
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+package si.comptus.jrelex.database;
 
-package si.comptus.jrelex.container;
-
-import java.io.Serializable;
-import java.util.HashMap;
+import java.sql.Connection;
+import si.comptus.jrelex.JRelExException;
+import si.comptus.jrelex.configuration.RDBMSType;
 
 /**
- * 
+ *
  * @author tomaz
  */
-public class CDatabaseStore implements Serializable {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1001L;
-	private HashMap<String, CDatabase> databases;
-	private CSettings appSettings;
+public class DynamicQueryFactory {
 
-	public CDatabaseStore() {
-		this.databases = new HashMap<String, CDatabase>();
-		this.setAppSettings(new CSettings());
-	}
-
-	public HashMap<String, CDatabase> getDatabases() {
-		return databases;
-	}
-
-	public void setDatabases(HashMap<String, CDatabase> databases) {
-		this.databases = databases;
-	}
-
-	public CSettings getAppSettings() {
-		return appSettings;
-	}
-
-	public void setAppSettings(CSettings appSettings) {
-		this.appSettings = appSettings;
-	}
-	
-	
-
+    public static <T>DynamicQueryAbstract<T> getDynamicQuery(RDBMSType type, Connection conn)
+            throws JRelExException{
+        switch(type) {
+            case MYSQL:
+                return new MysqlDynamicQuery<>(conn);
+            case MSSQL:
+                return new SqlserverDynamicQuery<>(conn);
+            case ORACLE:
+                return new OracleDynamicQuery<>(conn);
+            default:
+                throw new JRelExException("This type of RDBMSType is not supported");
+        }
+    }
 }

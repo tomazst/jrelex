@@ -9,7 +9,7 @@
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane prefHeight="800.0" prefWidth="1100.0" xmlns:fx="http://javafx.com/fxml" fx:controller="si.comptus.jrelex.MainController">
+<BorderPane prefHeight="600.0" prefWidth="1000.0" xmlns:fx="http://javafx.com/fxml" fx:controller="si.comptus.jrelex.MainController">
   <center>
     <TabPane id="tabPanePageShow" fx:id="tabPaneTopDisplay" />
   </center>
