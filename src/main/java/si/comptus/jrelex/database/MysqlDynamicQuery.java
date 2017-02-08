@@ -20,6 +20,7 @@
 package si.comptus.jrelex.database;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -43,7 +44,6 @@ import si.comptus.jrelex.container.CSettings;
 import si.comptus.jrelex.container.CTable;
 
 import com.panemu.tiwulfx.common.TableCriteria;
-import com.panemu.tiwulfx.common.TableCriteria.Operator;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 
 
@@ -52,29 +52,21 @@ import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
  * @author tomaz
  */
 public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
-    private Connection conn;
+    
     private static final Logger log = LoggerFactory.getLogger(MysqlDynamicQuery.class);
 
     public MysqlDynamicQuery(Connection conn){
-        this.conn = conn;
+        this.setConn(conn);
     }
 
-    public Connection getConn() {
-        return conn;
-    }
-
-    public void setConn(Connection conn) {
-        this.conn = conn;
-    }
-
-    public String getSqlForTableData(CTable table,
+    public PreparedStatement getPrepStmtTableData(CTable table,
                                         String databaseName,
                                         String storedDatabaseName,
                                         List<TableCriteria<T>> filteredColumns,
                                         List<String> sortedColumns,
                                         List<TableColumn.SortType> sortingOrders,
                                         int startIndex,
-                                        int maxResult)
+                                        int maxResult) throws SQLException
     {
         ArrayList<String> cols = new ArrayList<String>();
         for(CColumn col : table.getColumns()){
@@ -96,17 +88,20 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         if(maxResult > 0){
             sql += " LIMIT "+startIndex+", "+maxResult;
         }
-
+        
         log.debug(sql);
-        return sql;
+        PreparedStatement stmt = this.getConn().prepareStatement(sql);
+        
+        this.setWhereValues(stmt, filteredColumns);
+        return stmt;
     }
 
-    public String getSqlForTableData(CTable table,
+    public PreparedStatement getPrepStmtTableData(CTable table,
             String databaseName,
             String storedDatabaseName,
-            List<TableCriteria<T>> filteredColumns)
+            List<TableCriteria<T>> filteredColumns) throws SQLException
     {
-        return getSqlForTableData(table, databaseName, storedDatabaseName, filteredColumns, null, null, 0, 0);
+        return getPrepStmtTableData(table, databaseName, storedDatabaseName, filteredColumns, null, null, 0, 0);
     }
 
     private String sorts(List<String> sortedColumns,
@@ -139,11 +134,9 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         String sql = "SELECT COUNT(*) as c FROM "+databaseName+"."
                 +table.getName()+" "+getWhere(table, filteredColumns);
         log.debug(sql);
-        Statement stmt=null;
         int count=0;
-        try {
-            stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try(PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
+        		ResultSet rs = stmt.executeQuery();) {            
             if (rs != null) {
                 rs.next();
                 count = rs.getInt("c");
@@ -165,81 +158,6 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         }
 
         return where;
-    }
-
-    private ArrayList<String> conditions(CTable table, List<TableCriteria<T>> filteredColumns) {
-
-        ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
-
-        for (TableCriteria<? extends Object> filteredColumn : filteredColumns) {
-
-            String condition = "";
-
-            Operator operator = filteredColumn.getOperator();
-            String fieldValue = filteredColumn.getValue().toString();
-            String fieldName = filteredColumn.getAttributeName();
-
-            //boolean numeric = fieldValue.matches("[-+]?\\d*\\.?\\d+");
-
-            String fieldValueWithApostrof = fieldValue;
-            if(!this.isNumericType(table.getColumnByName(fieldName).getType())){
-                fieldValueWithApostrof = "'"+fieldValue+"'";
-            }
-
-            switch (operator) {
-            case eq:
-                condition += fieldName+" = "+fieldValueWithApostrof;
-                break;
-            case ne:
-                condition += fieldName+" != "+fieldValueWithApostrof;
-                break;
-            case le:
-                condition += fieldName+" <= "+fieldValueWithApostrof;
-                break;
-            case lt:
-                condition += fieldName+" < "+fieldValueWithApostrof;
-                break;
-            case ge:
-                condition += fieldName+" >= "+fieldValueWithApostrof;
-                break;
-            case gt:
-                condition += fieldName+" > "+fieldValueWithApostrof;
-                break;
-            case like_begin:
-                condition += fieldName+" LIKE '"+fieldValue+"%'";
-                break;
-            case like_anywhere:
-                condition += fieldName+" LIKE "+"'%"+fieldValue+"%'";
-                break;
-            case like_end:
-                condition += fieldName+" LIKE "+"'%"+fieldValue+"'";
-                break;
-            case ilike_begin:
-                condition += fieldName+" LIKE '"+fieldValue+"%'";
-                break;
-            case ilike_anywhere:
-                condition += fieldName+" LIKE "+"'%"+fieldValue+"%'";
-                break;
-            case ilike_end:
-                condition += fieldName+" LIKE "+"'%"+fieldValue+"'";
-                break;
-            case is_null:
-                condition += fieldName+" IS NULL";
-                break;
-            case is_not_null:
-                condition += fieldName+" IS NOT NULL";
-                break;
-            case in:
-                condition += fieldName+" IN ("+fieldValueWithApostrof+")";
-                break;
-            case not_in:
-                condition += fieldName+" NOT IN ("+fieldValueWithApostrof+")";
-                break;
-            default:
-            }
-            conditions.add(condition);
-        }
-        return conditions;
     }
 
     @Override
@@ -318,7 +236,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         }
 
         try {
-            Statement stmt = conn.createStatement();
+            Statement stmt = this.getConn().createStatement();
             String sql = "SELECT " + StringUtils.join(subQrys, ",");
             log.debug(sql);
             ResultSet rs = stmt.executeQuery(sql);

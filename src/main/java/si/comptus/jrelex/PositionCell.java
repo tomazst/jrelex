@@ -20,19 +20,14 @@
 package si.comptus.jrelex;
 
 import si.comptus.jrelex.container.CPosition;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TableCell;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 
 public class PositionCell<S, T> extends TableCell<S, T> {
-	TableCell tableCell;
+	TableCell<S, T> tableCell;
 	
 	public PositionCell(){
 		super();

@@ -20,6 +20,7 @@
 package si.comptus.jrelex;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -171,14 +172,11 @@ public class DbTableInGridPane {
 
         rowNumber++;
 
-        String sql = this.dq.getSqlForTableData(table, databaseName,
-                this.storedDatabaseName, filteredColumns);
-
 
         ResultSetMetaData rsmd;
-        try (Statement stmt = Common.getInstance().getDatabaseInteraction()
-                .getConnection(this.storedDatabaseName).createStatement();
-                ResultSet rs = stmt.executeQuery(sql);)
+        try (PreparedStatement stmt = this.dq.getPrepStmtTableData(
+        		table, databaseName,this.storedDatabaseName, filteredColumns);
+                ResultSet rs = stmt.executeQuery();)
         {
             rsmd = rs.getMetaData();
 

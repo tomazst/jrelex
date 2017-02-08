@@ -82,7 +82,7 @@ public class FromDBTypeToPropType {
 		timestampTypes.add("TIMESTAMP");
 	}
 
-	public Class getType(String jdbcType) {
+	public Class<?> getType(String jdbcType) {
 
 		if (stringTypes.contains(jdbcType)) {
 			return String.class;

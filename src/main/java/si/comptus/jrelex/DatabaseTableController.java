@@ -21,6 +21,7 @@ package si.comptus.jrelex;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -127,16 +128,13 @@ public class DatabaseTableController<T, V> extends TableController<T> {
             filteredColumnsG.add((TableCriteria<V>)criteria);
         }
 
-        String sql = this.dq.getSqlForTableData(databaseTable, databaseName,
-                this.storedDatabaseName, filteredColumnsG, sortedColumns,
-                sortingOrders, startIndex, maxResult);
-
         ArrayList<T> data = new ArrayList<>();
         int position = startIndex;
 
-        try (Statement stmt = Common.getInstance().getDatabaseInteraction()
-                .getConnection(this.storedDatabaseName).createStatement();
-                ResultSet rs = stmt.executeQuery(sql)) {
+        try (PreparedStatement stmt = this.dq.getPrepStmtTableData(
+        		databaseTable, databaseName, this.storedDatabaseName, filteredColumnsG, sortedColumns,
+                sortingOrders, startIndex, maxResult);
+                ResultSet rs = stmt.executeQuery()) {
 
             ResultSetMetaData rsmd = rs.getMetaData();
 

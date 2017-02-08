@@ -61,8 +61,6 @@ public class ReferencesCell<S, T> extends TableCell<S, T> {
                     // link.getParent().getParent();
                     TableCell<S,T> tableCell = (TableCell<S,T>) link.getParent();
 
-                    // tableCell.getTableRow().setStyle("-fx-background-color:
-                    // #eed3d7");
                     // tableCell.getTableView().getFocusModel().focus(tableCell.getTableRow().getIndex());
                     tableCell.getTableView().getSelectionModel().select(tableCell.getTableRow().getIndex());
                     // Dialog dialog = new Dialog<T>(item, tableCell);

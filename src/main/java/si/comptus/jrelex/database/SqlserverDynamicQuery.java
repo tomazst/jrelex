@@ -20,6 +20,7 @@
 package si.comptus.jrelex.database;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -43,7 +44,6 @@ import si.comptus.jrelex.container.CSettings;
 import si.comptus.jrelex.container.CTable;
 
 import com.panemu.tiwulfx.common.TableCriteria;
-import com.panemu.tiwulfx.common.TableCriteria.Operator;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 
 /**
@@ -67,11 +67,11 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         this.conn = conn;
     }
 
-    public String getSqlForTableData(CTable table, String databaseName,
+    public PreparedStatement getPrepStmtTableData(CTable table, String databaseName,
             String storedDatabaseName, List<TableCriteria<T>> filteredColumns,
             List<String> sortedColumns,
             List<TableColumn.SortType> sortingOrders, int startIndex,
-            int maxResult)
+            int maxResult) throws SQLException
     {
         String orderby = null;
 
@@ -105,13 +105,15 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = sql1 + sql2 + sql3;
 
+        PreparedStatement stmt = this.conn.prepareStatement(sql);
+        
         log.debug(sql);
-        return sql;
+        return stmt;
     }
 
-    public String getSqlForTableData(CTable table, String databaseName,
-            String storedDatabaseName, List<TableCriteria<T>> filteredColumns) {
-        return getSqlForTableData(table, databaseName, storedDatabaseName,
+    public PreparedStatement getPrepStmtTableData(CTable table, String databaseName,
+            String storedDatabaseName, List<TableCriteria<T>> filteredColumns) throws SQLException {
+        return getPrepStmtTableData(table, databaseName, storedDatabaseName,
                 filteredColumns, null, null, 0, 0);
     }
 
@@ -145,11 +147,9 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         String sql = "SELECT COUNT(*) as c FROM [" + databaseName + "].dbo."
                 + table.getName() + " " + getWhere(table, filteredColumns);
         log.debug(sql);
-        Statement stmt = null;
         int count = 0;
-        try {
-            stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
+        try (PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
+        		ResultSet rs = stmt.executeQuery();) {
             if (rs != null) {
                 rs.next();
                 count = rs.getInt("c");
@@ -172,7 +172,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         return where;
     }
-
+/*
     private ArrayList<String> conditions(CTable table,
             List<TableCriteria<T>> filteredColumns) {
 
@@ -248,6 +248,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         }
         return conditions;
     }
+*/
 /*
     private void displaySql(String sql) {
         TextField txtField = new TextField();
