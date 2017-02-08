@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 import javafx.event.EventHandler;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
@@ -186,8 +188,10 @@ public class DatabaseExplorerTab<V> {
         tab = Common.getInstance().tabExists(text, tabPaneExploreDatabases);
         if (tab == null) {
             tab = new Tab();
+            
             tab.setText(text);
             tabPaneExploreDatabases.getTabs().add(tab);
+            
         }
 
         // exploreTable.getTableView().setOnMouseReleased(tableRightClickListener);
@@ -196,31 +200,10 @@ public class DatabaseExplorerTab<V> {
 
     }
 
-    private EventHandler<MouseEvent> tableRightClickListener = new EventHandler<MouseEvent>() {
-        @Override
-        public void handle(MouseEvent event) {
-            if (event.getButton().equals(MouseButton.SECONDARY)) {
-                if (exploreTable.getTableView().getSelectionModel().getSelectedCells().isEmpty()) {
-                    return;
-                }
-                System.out.println("HMMM!");
-                System.out
-                        .println(exploreTable.getTableView().getSelectionModel().getSelectedCells().get(0).getClass());
-
-                TablePosition pos = exploreTable.getTableView().getSelectionModel().getSelectedCells().get(0);
-
-                System.out.println(pos.getTableColumn().getClass());
-
-                if (pos.getTableColumn() instanceof TableColumn) { // BaseColumn)
-                                                                   // {
-                    System.out.println("Kliknil si miško!");
-                }
-            }
-        }
-    };
-
     public Tab getTab() {
         return tab;
     }
+    
+    
 
 }

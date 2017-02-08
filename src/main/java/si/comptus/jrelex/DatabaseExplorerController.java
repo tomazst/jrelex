@@ -27,14 +27,17 @@ import java.util.ResourceBundle;
 import java.util.TreeMap;
 
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -45,6 +48,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -128,6 +132,34 @@ public class DatabaseExplorerController implements Initializable {
                 return scene;
             }
         });
+        
+        final MenuItem itemCloseOthers = new MenuItem("Close All But Selected");
+        itemCloseOthers.setOnAction(event -> {
+        	System.out.println("itemCloseOthers");
+        	Tab tempTab = null;
+        	for(Tab tab : exploreTablesTabPane.getTabs()){
+        		if(tab.isSelected()) {
+        			tempTab = tab;
+        		}
+        	}
+        	exploreTablesTabPane.getTabs().clear();
+        	exploreTablesTabPane.getTabs().add(tempTab);
+        });
+        
+        final MenuItem itemCloseAll = new MenuItem("Close All");
+        itemCloseAll.setOnAction(event -> {
+        	exploreTablesTabPane.getTabs().clear();
+        });
+        
+        exploreTablesTabPane.setOnMouseClicked(event -> {
+        	if(event.getButton() == MouseButton.SECONDARY) {
+	        	ContextMenu menu = new ContextMenu(
+	        			itemCloseOthers,itemCloseAll
+	        			);
+	        	menu.show(exploreTablesTabPane.getScene().getWindow(),
+	        			event.getScreenX(), event.getScreenY());
+        	}
+        });
 
     }
 
@@ -144,6 +176,15 @@ public class DatabaseExplorerController implements Initializable {
             this.TBLFilterValue = ((TextField) event.getSource()).getText();
             this.refreshTreeViewDatabaseList(Common.getInstance()
                     .getDbstore().getDatabases());
+        }
+    }
+    
+    private void closeTab(Tab tab) {
+        EventHandler<Event> handler = tab.getOnClosed();
+        if (null != handler) {
+            handler.handle(null);
+        } else {
+            tab.getTabPane().getTabs().remove(tab);
         }
     }
 
