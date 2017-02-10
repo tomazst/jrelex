@@ -52,7 +52,7 @@ import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
  * @author tomaz
  */
 public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
-    
+
     private static final Logger log = LoggerFactory.getLogger(MysqlDynamicQuery.class);
 
     public MysqlDynamicQuery(Connection conn){
@@ -88,11 +88,10 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         if(maxResult > 0){
             sql += " LIMIT "+startIndex+", "+maxResult;
         }
-        
+
         log.debug(sql);
-        PreparedStatement stmt = this.getConn().prepareStatement(sql);
-        
-        this.setWhereValues(stmt, filteredColumns);
+        PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
+
         return stmt;
     }
 
@@ -136,7 +135,7 @@ public class MysqlDynamicQuery<T> extends DynamicQueryAbstract<T> {
         log.debug(sql);
         int count=0;
         try(PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
-        		ResultSet rs = stmt.executeQuery();) {            
+                ResultSet rs = stmt.executeQuery();) {
             if (rs != null) {
                 rs.next();
                 count = rs.getInt("c");

@@ -27,7 +27,6 @@ import java.util.ResourceBundle;
 import java.util.TreeMap;
 
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -65,6 +64,9 @@ import com.panemu.tiwulfx.control.DetachableTabPane;
  */
 public class DatabaseExplorerController implements Initializable {
 
+    /**
+     *
+     */
     @FXML
     public TreeView<String> trvDatabaseList;
     @FXML
@@ -132,33 +134,32 @@ public class DatabaseExplorerController implements Initializable {
                 return scene;
             }
         });
-        
+
         final MenuItem itemCloseOthers = new MenuItem("Close All But Selected");
         itemCloseOthers.setOnAction(event -> {
-        	System.out.println("itemCloseOthers");
-        	Tab tempTab = null;
-        	for(Tab tab : exploreTablesTabPane.getTabs()){
-        		if(tab.isSelected()) {
-        			tempTab = tab;
-        		}
-        	}
-        	exploreTablesTabPane.getTabs().clear();
-        	exploreTablesTabPane.getTabs().add(tempTab);
+            Tab tempTab = null;
+            for(Tab tab : exploreTablesTabPane.getTabs()){
+                if(tab.isSelected()) {
+                    tempTab = tab;
+                }
+            }
+            exploreTablesTabPane.getTabs().clear();
+            exploreTablesTabPane.getTabs().add(tempTab);
         });
-        
+
         final MenuItem itemCloseAll = new MenuItem("Close All");
         itemCloseAll.setOnAction(event -> {
-        	exploreTablesTabPane.getTabs().clear();
+            exploreTablesTabPane.getTabs().clear();
         });
-        
+
         exploreTablesTabPane.setOnMouseClicked(event -> {
-        	if(event.getButton() == MouseButton.SECONDARY) {
-	        	ContextMenu menu = new ContextMenu(
-	        			itemCloseOthers,itemCloseAll
-	        			);
-	        	menu.show(exploreTablesTabPane.getScene().getWindow(),
-	        			event.getScreenX(), event.getScreenY());
-        	}
+            if(event.getButton() == MouseButton.SECONDARY) {
+                ContextMenu menu = new ContextMenu(
+                        itemCloseOthers,itemCloseAll
+                        );
+                menu.show(exploreTablesTabPane.getScene().getWindow(),
+                        event.getScreenX(), event.getScreenY());
+            }
         });
 
     }
@@ -176,15 +177,6 @@ public class DatabaseExplorerController implements Initializable {
             this.TBLFilterValue = ((TextField) event.getSource()).getText();
             this.refreshTreeViewDatabaseList(Common.getInstance()
                     .getDbstore().getDatabases());
-        }
-    }
-    
-    private void closeTab(Tab tab) {
-        EventHandler<Event> handler = tab.getOnClosed();
-        if (null != handler) {
-            handler.handle(null);
-        } else {
-            tab.getTabPane().getTabs().remove(tab);
         }
     }
 
@@ -228,11 +220,6 @@ public class DatabaseExplorerController implements Initializable {
             CDatabase storedDatabase = pairs.getValue();
 
             // user can select to see database in tree view
-            /*
-             if(!storedDatabase.isVisible()){
-             continue;
-             }
-             */
             String storedDatabaseName = pairs.getKey();
 
             if (this.filterName(storedDatabaseName, this.DBFilterValue)) {

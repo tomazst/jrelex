@@ -264,7 +264,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * Database from UI form gets loaded.
+     * Database combobox from UI form gets loaded.
      */
     public final void reloadDatabaseList() {
         List<String> dbList = new ArrayList<>();
@@ -323,7 +323,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * Checks if form data is valid.
+     * Validate form data.
      *
      * @return boolean
      */
@@ -336,7 +336,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * Checks form data.
+     * Validate form data.
      *
      * @return tag
      */
@@ -448,7 +448,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * Deletes database meta data.
+     * For Oracle connection user must set SID and oracle driver.
      */
     public final void enableFormElements() {
         String dbmsName = cbDbms.getSelectionModel().getSelectedItem();
@@ -469,7 +469,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * Method is inserting data to UI form.
+     * Inserting form data from database to UI form.
      *
      * @param storedDatabaseId String
      */
@@ -526,7 +526,7 @@ public class DatabaseMetaDataController implements Initializable {
     }
 
     /**
-     * TreeView node.
+     * TreeView node. List of Tables.
      * @param databaseName database name
      * @param name table name
      * @param check to check
@@ -541,7 +541,7 @@ public class DatabaseMetaDataController implements Initializable {
         //tableItem.setGraphic(imgViewTable);
         tviTable.setSelected(check);
 
-        tviTable.selectedProperty().addListener((Observable o) -> {
+        tviTable.selectedProperty().addListener(o -> {
             final BooleanProperty property = (BooleanProperty) o;
 
             final TreeItem<String> item = (TreeItem<String>) property.getBean();
@@ -575,7 +575,7 @@ public class DatabaseMetaDataController implements Initializable {
 
         tviColumn.setSelected(check);
 
-        tviColumn.selectedProperty().addListener((Observable o) -> {
+        tviColumn.selectedProperty().addListener(o -> {
             final BooleanProperty property = (BooleanProperty) o;
 
             final TreeItem<String> item = (TreeItem<String>) property.getBean();
@@ -592,14 +592,14 @@ public class DatabaseMetaDataController implements Initializable {
             Common.getInstance().getDbstore()
                     .getDatabases().get(sstoredDatabase).getTables()
                     .get(tableName).getColumnByName(columnName).setVisible(property.getValue());
-        }
-        );
+        });
 
         return tviColumn;
     }
 
     /**
      * Refreshing database list in tree view.
+     * It contains list of databases, tables and columns.
      *
      * @param databases Saved database list.
      */
@@ -857,11 +857,17 @@ public class DatabaseMetaDataController implements Initializable {
         }
     }
 
+    /**
+     * Updates combobox of databases with text from SID text field.
+     */
     public final void updateCbDatabase() {
         this.cbDatabase.setValue(this.txfSID.getText());
         this.txfSID.positionCaret(this.txfSID.getText().length());
     }
 
+    /**
+     * Updates SID text field with selected database in combobox.
+     */
     public final void updateTxfSID() {
         this.txfSID.setText(this.cbDatabase.getValue());
     }
