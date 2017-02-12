@@ -28,8 +28,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Hyperlink;
@@ -56,7 +54,6 @@ import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import si.comptus.jrelex.container.CColumnTableReferences;
 import si.comptus.jrelex.container.CReferenceData;
 import si.comptus.jrelex.container.CTable;
-import si.comptus.jrelex.database.DynamicQueryAbstract;
 
 /**
  * It shows references in UI.
@@ -70,18 +67,23 @@ public class ColumnRefToTablesView<T, V> {
     /**
      * Logger.
      */
-    private static final Logger LOG = LoggerFactory.getLogger(ColumnRefToTablesView.class);
+    private static final Logger log = LoggerFactory.getLogger(ColumnRefToTablesView.class);
 
     HashMap<String, CColumnTableReferences> colReferences = null;
 
     /*
-     * All references found for column value in database
+     * All references for column value found in database
      */
     HashMap<String, List<CReferenceData>> allColumnsValueReferences;
-
+    
     public ColumnRefToTablesView() {
     }
 
+    /**
+     * List references in tree view
+     * @param item
+     * @param tableCell
+     */
     public void showReferences(final HashMap<String, CColumnTableReferences> item, final TableCell<T, V> tableCell) {
 
         allColumnsValueReferences = new HashMap<>();
@@ -98,188 +100,27 @@ public class ColumnRefToTablesView<T, V> {
 
             // Column name
             String columnName = (String) iterator.next();
+            
             CColumnTableReferences colReference = colReferences.get(columnName);
 
             Hyperlink columnlink = new Hyperlink();
-            Image imageColumn = new Image(getClass().getResourceAsStream(
-                    "/images/column.png"));
+            Image imageColumn = new Image(getClass().getResourceAsStream("/images/column.png"));
             ImageView imageViewColumn = new ImageView(imageColumn);
 
             columnlink.setGraphic(imageViewColumn);
             columnlink.setText(columnName);
 
             /**
-             * Shows all referenced data in tables in the botom of window.
-             *
+             * Shows all referenced data in tables at the botom of the window.
              * This action creates tables to view all referenced data in database tables
              */
-            columnlink.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent e) {
-                    Hyperlink columnlink = (Hyperlink) e.getSource();
-                    String columnName = columnlink.getText();
-
-                    CColumnTableReferences colReference = colReferences
-                            .get(columnName);
-                    //log.info(colReference.getTableName());
-
-                    // column value references in database
-                    List<CReferenceData> references = allColumnsValueReferences
-                            .get(colReference.getColumn().getName());
-
-                    // TitledPane[] titledPanes = new
-                    // TitledPane[references.size()];
-                    VBox vbox = new VBox();
-
-                    int i = 0;
-                    for (final CReferenceData refData : references) {
-
-                        TableCriteria<String> tableCriteria = new TableCriteria<>(
-                                refData.getColumnName(), Operator.eq,
-                                refData.getValue());
-                        final List<TableCriteria<String>> filteredColumns = new ArrayList<>();
-                        filteredColumns.add(tableCriteria);
-
-                        CTable table = Common.getInstance().getDbstore()
-                                .getDatabases()
-                                .get(refData.getStoredDatabase())
-                                .getTables().get(refData.getTableName());
-                        String databaseName = Common.getInstance()
-                                .getDbstore().getDatabases()
-                                .get(refData.getStoredDatabase()).getName();
-
-                        Connection conn = Common.getInstance()
-                                .getDatabaseInteraction()
-                                .getConnection(refData.getStoredDatabase());
-
-                        // add data to pane
-                        Hyperlink title = new Hyperlink();
-
-                        title.setText(databaseName + "." + table.getName()
-                                + " (column: " + refData.getColumnName()
-                                + ", value: " + refData.getValue() + ")");
-                        title.setFont(Font.font("Arial", FontWeight.BOLD,
-                                14));
-                        title.setStyle("-fx-color: #1919FF;");
-
-                        title.setOnAction(new EventHandler<ActionEvent>() {
-                            @Override
-                            public void handle(ActionEvent e) {
-                                Hyperlink link = (Hyperlink) e.getSource();
-                                link.setVisited(false);
-
-                                Tab tab = Common.getInstance().tabExists(
-                                        refData.getTableName(),
-                                        Common.getInstance()
-                                        .getTablesTabPane());
-
-                                //if (tab == null) {
-                                Connection conn = Common
-                                        .getInstance()
-                                        .getDatabaseInteraction()
-                                        .getConnection(
-                                                refData.getStoredDatabase());
-                                CTable table = Common
-                                        .getInstance()
-                                        .getDbstore()
-                                        .getDatabases()
-                                        .get(refData
-                                                .getStoredDatabase())
-                                        .getTables()
-                                        .get(refData.getTableName());
-
-                                DatabaseExplorerTab<String> databaseExplorerTab = new DatabaseExplorerTab<>(
-                                        Common.getInstance()
-                                        .getTablesTabPane(),
-                                        conn, table, refData
-                                        .getDatabaseName(),
-                                        refData.getStoredDatabase(),
-                                        filteredColumns);
-                                tab = databaseExplorerTab.getTab();
-
-                                //}
-                                Common.getInstance().getTablesTabPane()
-                                        .getSelectionModel().select(tab);
-                            }
-                        });
-
-                        vbox.getChildren().add(title);
-
-                        DbTableInGridPane tableGrid = null;
-                        try {
-                            tableGrid = new DbTableInGridPane(
-                                    refData.getStoredDatabase(), refData.getColumnName(), conn);
-                        }
-                        catch (JRelExException e2) {
-                            LOG.error(e2.getMessage(), e2);
-                            MessageDialogBuilder.error(e2).show(null);
-                        }
-                        GridPane grid = tableGrid.getTableGrid(
-                                databaseName, table, filteredColumns);
-
-                        ScrollPane scrollPane = new ScrollPane();
-                        scrollPane.setVbarPolicy(ScrollBarPolicy.NEVER);
-                        scrollPane.setFitToHeight(true);
-                        scrollPane.setContent(grid);
-
-                        scrollPane.setPrefHeight(grid.getMaxHeight());
-                        scrollPane.setPrefWidth((Common.getInstance().getVerticalSplitPane().getWidth() - 20));
-                        scrollPane.setStyle("-fx-background-color: transparent");
-
-                        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-                        vbox.getChildren().add(scrollPane);
-
-                        Separator separator = new Separator();
-                        separator.setOrientation(Orientation.HORIZONTAL);
-                        vbox.getChildren().add(separator);
-
-                        i++;
-                    }
-
-                    vbox.setSpacing(5);
-                    vbox.setPadding(new Insets(10, 0, 0, 10));
-                    //vbox.setStyle("-fx-border-color: #77ff11");
-                    //vbox.setPrefWidth(1050);
-                    VBox.setVgrow(vbox, Priority.ALWAYS);
-
-                    ScrollPane scrollPane2 = new ScrollPane();
-                    scrollPane2.setContent(vbox);
-
-                    if (Common.getInstance().getVerticalSplitPane().getItems().size() < 2) {
-
-                        TabPane tabPane = new TabPane();
-                        Tab tab = new Tab();
-
-                        tab.setText("Referenced data");
-                        //tab.setStyle("-fx-border-color: #FF0000");
-
-                        tab.setContent(scrollPane2);
-                        tabPane.getTabs().add(tab);
-
-                        Common.getInstance().getVerticalSplitPane().getItems().add(tabPane);
-
-                    } else {
-
-                        TabPane tabPane = (TabPane) Common.getInstance().getVerticalSplitPane().getItems().get(1);
-
-                        if (tabPane.getTabs().size() == 0) {
-                            Tab tab = new Tab();
-                            tab.setText("Referenced data");
-                            //tab.setStyle("-fx-border-color: #FF0000");
-
-                            tab.setText("Referenced data");
-                            tab.setContent(scrollPane2);
-                            tabPane.getTabs().add(tab);
-                        } else {
-                            tabPane.getTabs().get(0).setContent(scrollPane2);
-                        }
-
-                    }
-
-                }
+            columnlink.setOnAction(event -> {
+                Hyperlink rdColumnlink = (Hyperlink) event.getSource();
+                String rdColumnName = rdColumnlink.getText();
+                this.initializeTableReferencePane(rdColumnName);
             });
-
+            
+            // Tree view
             TreeItem<String> columnItem = new TreeItem<String>("");
             columnItem.setExpanded(true);
 
@@ -287,13 +128,12 @@ public class ColumnRefToTablesView<T, V> {
 
             rootItem.getChildren().add(columnItem);
 
-            // column references
-            DynamicQueryAbstract<? extends Object> dq = colReference.getDq();
             // column value references in database. Counts data in the database.
-            HashMap<String, CReferenceData> references_tmp = dq.getReferencedData(
+            HashMap<String, CReferenceData> references_tmp = colReference.getDq().getReferencedData(
                     colReference.getStoredDatabaseName(),
                     colReference.getDatabaseName(),
-                    colReference.getTableName(), colReference.getColumn(),
+                    colReference.getTableName(), 
+                    colReference.getColumn(),
                     colReference.getValue());
 
             // order references HashMap in ArrayList. First are primary keys. Next are foreign keys.
@@ -352,9 +192,7 @@ public class ColumnRefToTablesView<T, V> {
 
                 link.setText(referencedTableName + "("
                         + refData.getStrikes() + ")");
-                link.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {// from hier i call table
+                link.setOnAction(event -> {// from hier i call table
                         final ArrayList<TableCriteria<String>> filteredColumns = new ArrayList<>();
                         TableCriteria<String> tableCriteria = new TableCriteria<>();
                         tableCriteria.setAttributeName(refData
@@ -363,20 +201,12 @@ public class ColumnRefToTablesView<T, V> {
                         tableCriteria.setValue(refData.getValue());
                         filteredColumns.add(tableCriteria);
 
-                        //log.info(refData.getColumnName());
-                        // List filteredColumns = (List) list;
-                        /*
-                         * Common.getInstance().getBrowserController().load(
-                         * refData.getStoredDatabase(),
-                         * refData.getTableName(), filteredColumns);
-                         */
-                        String tabName = refData.getTableName() + "."
-                                + refData.getColumnName();
+                        log.debug(refData.getColumnName());
+                        
                         Tab tab = Common.getInstance().tabExists(
                                 refData.getTableName(),
                                 Common.getInstance().getTablesTabPane());
 
-                        //if (tab == null) {
                         Connection conn = Common
                                 .getInstance()
                                 .getDatabaseInteraction()
@@ -394,16 +224,13 @@ public class ColumnRefToTablesView<T, V> {
                                 filteredColumns);
                         tab = databaseExplorerTab.getTab();
 
-                        //}
                         Common.getInstance().getTablesTabPane()
                                 .getSelectionModel().select(tab);
-                    }
                 });
                 TreeItem<String> tableItem = new TreeItem<String>("");
                 tableItem.setGraphic(link);
                 columnItem.getChildren().add(tableItem);
             }
-            // references=null;
         }
         rootItem.setExpanded(true);
 
@@ -430,6 +257,153 @@ public class ColumnRefToTablesView<T, V> {
         tab.setContent(tree);
         Common.getInstance().getExplorerLeftSideTabPane().getSelectionModel()
                 .select(tab);
+
+    }
+    
+    /**
+     * Creates view for all column value references.
+     * It is shown at the window bottom. 
+     * @param columnName
+     */
+    private void initializeTableReferencePane(String columnName) {
+
+    	CColumnTableReferences colReference = colReferences
+                .get(columnName);
+        //log.debug(colReference.getTableName());
+
+        // column value references in database
+        List<CReferenceData> references = allColumnsValueReferences
+                .get(colReference.getColumn().getName());
+
+        // TitledPane[] titledPanes = new
+        // TitledPane[references.size()];
+        VBox vbox = new VBox();
+
+        int i = 0;
+        for (final CReferenceData refData : references) {
+
+            TableCriteria<String> tableCriteria = new TableCriteria<>(
+                    refData.getColumnName(), Operator.eq,
+                    refData.getValue());
+            final List<TableCriteria<String>> filteredColumns = new ArrayList<>();
+            filteredColumns.add(tableCriteria);
+
+            CTable table = Common.getInstance().getDbstore()
+                    .getDatabases()
+                    .get(refData.getStoredDatabase())
+                    .getTables().get(refData.getTableName());
+            String databaseName = Common.getInstance()
+                    .getDbstore().getDatabases()
+                    .get(refData.getStoredDatabase()).getName();
+
+            final Connection conn = Common.getInstance()
+                    .getDatabaseInteraction()
+                    .getConnection(refData.getStoredDatabase());
+
+            // add data to pane
+            Hyperlink title = new Hyperlink();
+
+            title.setText(databaseName + "." + table.getName()
+                    + " (column: " + refData.getColumnName()
+                    + ", value: " + refData.getValue() + ")");
+            title.setFont(Font.font("Arial", FontWeight.BOLD,
+                    14));
+            title.setStyle("-fx-color: #1919FF;");
+            
+            // Show referenced data in Database Explorer Tab
+            title.setOnAction(event-> {
+                    Hyperlink link = (Hyperlink) event.getSource();
+                    link.setVisited(false);
+
+                    //Tab tab = Common.getInstance().tabExists(refData.getTableName(), Common.getInstance().getTablesTabPane());                    
+                    CTable refTable = Common.getInstance().getDbstore()
+                            .getDatabases().get(refData.getStoredDatabase())
+                            .getTables().get(refData.getTableName());
+
+                    DatabaseExplorerTab<String> databaseExplorerTab = new DatabaseExplorerTab<>(
+                            Common.getInstance().getTablesTabPane(),
+                            conn, refTable, refData.getDatabaseName(),
+                            refData.getStoredDatabase(),
+                            filteredColumns);
+                    
+                    Tab tab = databaseExplorerTab.getTab();
+
+                    Common.getInstance().getTablesTabPane()
+                            .getSelectionModel().select(tab);
+            });
+
+            vbox.getChildren().add(title);
+
+            DbTableInGridPane tableGrid = null;
+            try {
+                tableGrid = new DbTableInGridPane(
+                        refData.getStoredDatabase(), 
+                        refData.getColumnName(), conn
+                        );
+            }
+            catch (JRelExException e2) {
+                log.error(e2.getMessage(), e2);
+                MessageDialogBuilder.error(e2).show(null);
+            }
+            GridPane grid = tableGrid.getTableGrid(
+                    databaseName, table, filteredColumns);
+
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setVbarPolicy(ScrollBarPolicy.NEVER);
+            scrollPane.setFitToHeight(true);
+            scrollPane.setContent(grid);
+
+            scrollPane.setPrefHeight(grid.getMaxHeight());
+            scrollPane.setPrefWidth((Common.getInstance().getVerticalSplitPane().getWidth() - 20));
+            scrollPane.setStyle("-fx-background-color: transparent");
+
+            VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+            vbox.getChildren().add(scrollPane);
+
+            Separator separator = new Separator();
+            separator.setOrientation(Orientation.HORIZONTAL);
+            vbox.getChildren().add(separator);
+
+            i++;
+        }
+
+        vbox.setSpacing(5);
+        vbox.setPadding(new Insets(10, 0, 0, 10));
+        //vbox.setStyle("-fx-border-color: #77ff11");
+        //vbox.setPrefWidth(1050);
+        VBox.setVgrow(vbox, Priority.ALWAYS);
+
+        ScrollPane scrollPane2 = new ScrollPane();
+        scrollPane2.setContent(vbox);
+
+        if (Common.getInstance().getVerticalSplitPane().getItems().size() < 2) {
+
+            TabPane tabPane = new TabPane();
+            Tab tab = new Tab();
+
+            tab.setText("Referenced data");
+            //tab.setStyle("-fx-border-color: #FF0000");
+
+            tab.setContent(scrollPane2);
+            tabPane.getTabs().add(tab);
+
+            Common.getInstance().getVerticalSplitPane().getItems().add(tabPane);
+
+        } else {
+
+            TabPane tabPane = (TabPane) Common.getInstance().getVerticalSplitPane().getItems().get(1);
+
+            if (tabPane.getTabs().size() == 0) {
+                Tab tab = new Tab();
+                tab.setText("Referenced data");
+                tab.setContent(scrollPane2);
+                tabPane.getTabs().add(tab);
+            } else {
+                tabPane.getTabs().get(0).setContent(scrollPane2);
+            }
+
+        }
 
     }
 
