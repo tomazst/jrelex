@@ -19,6 +19,8 @@
 
 package si.comptus.jrelex;
 
+import com.panemu.tiwulfx.common.TableCriteria;
+import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,29 +31,23 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
-import javafx.scene.layout.GridPane;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import si.comptus.jrelex.container.CColumn;
-import si.comptus.jrelex.container.CTable;
-import si.comptus.jrelex.database.DynamicQueryAbstract;
-
-import com.panemu.tiwulfx.common.TableCriteria;
-import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.configuration.RDBMSType;
+import si.comptus.jrelex.container.CColumn;
+import si.comptus.jrelex.container.CTable;
+import si.comptus.jrelex.database.DynamicQueryAbstract;
 import si.comptus.jrelex.database.DynamicQueryFactory;
 
-public class DbTableInGridPane {
+public class ReferenceDataGrid {
 
     private static final Logger log = LoggerFactory
             .getLogger(DatabaseTableController.class);
@@ -62,7 +58,7 @@ public class DbTableInGridPane {
 
     private String referedColumn = "";
 
-    public DbTableInGridPane(String storedDatabaseName, String referedColumn, Connection conn)
+    public ReferenceDataGrid(String storedDatabaseName, String referedColumn, Connection conn)
             throws JRelExException {
         super();
 

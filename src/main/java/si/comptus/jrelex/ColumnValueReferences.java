@@ -19,15 +19,14 @@
 
 package si.comptus.jrelex;
 
+import com.panemu.tiwulfx.common.TableCriteria;
+import com.panemu.tiwulfx.common.TableCriteria.Operator;
+import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Hyperlink;
@@ -46,11 +45,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
-import com.panemu.tiwulfx.common.TableCriteria;
-import com.panemu.tiwulfx.common.TableCriteria.Operator;
-import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.container.CColumnTableReferences;
 import si.comptus.jrelex.container.CReferenceData;
 import si.comptus.jrelex.container.CTable;
@@ -62,12 +58,12 @@ import si.comptus.jrelex.container.CTable;
  * @param <T> type of record in row
  * @param <V> type of value in a cell
  */
-public class ColumnRefToTablesView<T, V> {
+public class ColumnValueReferences<T, V> {
 
     /**
      * Logger.
      */
-    private static final Logger log = LoggerFactory.getLogger(ColumnRefToTablesView.class);
+    private static final Logger log = LoggerFactory.getLogger(ColumnValueReferences.class);
 
     HashMap<String, CColumnTableReferences> colReferences = null;
 
@@ -76,7 +72,7 @@ public class ColumnRefToTablesView<T, V> {
      */
     HashMap<String, List<CReferenceData>> allColumnsValueReferences;
     
-    public ColumnRefToTablesView() {
+    public ColumnValueReferences() {
     }
 
     /**
@@ -334,9 +330,9 @@ public class ColumnRefToTablesView<T, V> {
 
             vbox.getChildren().add(title);
 
-            DbTableInGridPane tableGrid = null;
+            ReferenceDataGrid tableGrid = null;
             try {
-                tableGrid = new DbTableInGridPane(
+                tableGrid = new ReferenceDataGrid(
                         refData.getStoredDatabase(), 
                         refData.getColumnName(), conn
                         );
