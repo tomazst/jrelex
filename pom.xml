@@ -23,6 +23,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>8.6.0</version>
                 <configuration>
+                    <vendor>Comptus</vendor>
                     <mainClass>si.comptus.jrelex.MainApp</mainClass>
                 </configuration>
             </plugin>
