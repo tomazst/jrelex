@@ -42,308 +42,310 @@ import si.comptus.jrelex.container.ConnBean;
  */
 public class DatabaseMetaDataDAO {
 
-    /**
-     * Logger.
-     */
-    private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(DatabaseMetaDataDAO.class);
+	/**
+	 * Logger.
+	 */
+	private static final org.slf4j.Logger log = LoggerFactory.getLogger(DatabaseMetaDataDAO.class);
 
-    private String username;
-    private RDBMSType rdbmsType;
-    private CDatabase databaseContainer = null;
+	private String username;
+	private RDBMSType rdbmsType;
+	private CDatabase databaseContainer = null;
 
-    private DatabaseMetaData metaData = null;
-    private String catalog = "";
-    private String shema = "";
+	private DatabaseMetaData metaData = null;
+	private String catalog = "";
+	private String shema = "";
 
-    private int tableCount = 0;
+	private int tableCount = 0;
 
-    private ResultSet resultSetTables;
+	private ResultSet resultSetTables;
 
-    public DatabaseMetaDataDAO(Connection connection, ConnBean bean) throws SQLException {
+	public DatabaseMetaDataDAO(Connection connection, ConnBean bean) throws SQLException {
 
-        this.username = bean.getUsername();
-        this.rdbmsType = bean.getDriver();
+		this.username = bean.getUsername();
+		this.rdbmsType = bean.getDriver();
 
-        this.metaData = connection.getMetaData();
-        this.catalog = connection.getCatalog();
-        this.shema = connection.getSchema();
+		this.metaData = connection.getMetaData();
+		this.catalog = connection.getCatalog();
+		this.shema = connection.getSchema();
 
-        this.databaseContainer = new CDatabase();
-        this.databaseContainer.setConnBean(bean);
+		this.databaseContainer = new CDatabase();
+		this.databaseContainer.setConnBean(bean);
 
-        this.databaseContainer.setTables(new HashMap<String, CTable>(this.getTableCount()));
+		this.databaseContainer.setTables(new HashMap<String, CTable>(this.getTableCount()));
 
-    }
+	}
 
-    public JRelExIterator<CTable> Iterator() throws SQLException {
-        String[] types = { "TABLE" };
-        this.resultSetTables = this.metaData.getTables(this.catalog, null, null, types);
+	public JRelExIterator<CTable> Iterator() throws SQLException {
+		String[] types = { "TABLE" };
+		this.resultSetTables = this.metaData.getTables(this.catalog, null, null, types);
 
-        return new DatabaseMetaDataDAO.TableIterator(this.resultSetTables, this.databaseContainer, this.metaData,
-                this.catalog, this.shema);
-    }
+		return new DatabaseMetaDataDAO.TableIterator(this.resultSetTables, this.databaseContainer, this.metaData,
+				this.catalog, this.shema);
+	}
 
-    public CDatabase getDatabaseContainer() {
-        return this.databaseContainer;
-    }
+	public CDatabase getDatabaseContainer() {
+		return this.databaseContainer;
+	}
 
-    public DatabaseMetaData getMetaData() throws SQLException {
-        return this.metaData;
-    }
+	public DatabaseMetaData getMetaData() throws SQLException {
+		return this.metaData;
+	}
 
-    public String getCatalog() {
-        return catalog;
-    }
+	public String getCatalog() {
+		return catalog;
+	}
 
-    public String getShema() {
-        return shema;
-    }
+	public String getShema() {
+		return shema;
+	}
 
-    public int getTableCount() throws SQLException {
-        if (this.tableCount == 0) {
-            this.tableCount = this.countTables();
-        }
-        return tableCount;
-    }
+	public int getTableCount() throws SQLException {
+		if (this.tableCount == 0) {
+			this.tableCount = this.countTables();
+		}
+		return tableCount;
+	}
 
-    public ResultSet getResultSetTables() {
-        return resultSetTables;
-    }
+	public ResultSet getResultSetTables() {
+		return resultSetTables;
+	}
 
-    private int countTables() throws SQLException {
+	private int countTables() throws SQLException {
 
-        int tableCount = 0;
-        final String[] types = { "TABLE" };
-        try (ResultSet resultSetTables = this.getMetaData()
-                .getTables(this.catalog, null, null, types)
-                ) {
+		int tableCount = 0;
+		final String[] types = { "TABLE" };
+		try (ResultSet resultSetTables = this.getMetaData().getTables(this.catalog, null, null, types)) {
 
-            while (resultSetTables.next()) {
-                // we check if user has access. MSSQL has always dbo.
-                String TABLE_SCHEM = resultSetTables.getString(2);
-                if (TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")) {
-                    if (!TABLE_SCHEM.equalsIgnoreCase(this.username)) {
-                        continue;
-                    }
-                }
-                // we check if is table
-                String TYPE = resultSetTables.getString(4);
-                if (!TYPE.equals("TABLE")) {
-                    continue;
-                }
-                if (this.rdbmsType.equals(RDBMSType.ORACLE)) {
-                    // Tables that begin on BIN are omited
-                    if (resultSetTables.getString(3).startsWith("BIN")) {
-                        continue;
-                    }
-                }
-                tableCount++;
-            }
-        }
-        return tableCount;
-    }
+			while (resultSetTables.next()) {
+				// we check if user has access. MSSQL has always dbo.
+				String TABLE_SCHEM = resultSetTables.getString(2);
+				if (TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")) {
+					if (!TABLE_SCHEM.equalsIgnoreCase(this.username)) {
+						continue;
+					}
+				}
+				// we check if is table
+				String TYPE = resultSetTables.getString(4);
+				if (!TYPE.equals("TABLE")) {
+					continue;
+				}
+				if (this.rdbmsType.equals(RDBMSType.ORACLE)) {
+					// Tables that begin on BIN are omited
+					if (resultSetTables.getString(3).startsWith("BIN")) {
+						continue;
+					}
+				}
+				tableCount++;
+			}
+		}
+		return tableCount;
+	}
 
-    class TableIterator implements JRelExIterator<CTable> {
+	class TableIterator implements JRelExIterator<CTable> {
 
-        private ResultSet resultSetTables = null;
-        private int currentTableIndex = 0;
-        private CDatabase databaseContainer = null;
+		private ResultSet resultSetTables = null;
+		private int currentTableIndex = 0;
+		private CDatabase databaseContainer = null;
 
-        private DatabaseMetaData metaData = null;
-        private String catalog = "";
-        private String shema = "";
+		private DatabaseMetaData metaData = null;
+		private String catalog = "";
+		private String shema = "";
 
-        private ArrayList<CReference> tempReferences = new ArrayList<CReference>();
+		private ArrayList<CReference> tempReferences = new ArrayList<CReference>();
 
-        public TableIterator(ResultSet resultSetTables, CDatabase databaseContainer, DatabaseMetaData metaData,
-                String catalog, String shema) throws SQLException {
+		public TableIterator(ResultSet resultSetTables, CDatabase databaseContainer, DatabaseMetaData metaData,
+				String catalog, String shema) throws SQLException {
 
-            this.resultSetTables = resultSetTables;
-            this.databaseContainer = databaseContainer;
-            this.metaData = metaData;
-            this.catalog = catalog;
-            this.shema = shema;
+			this.resultSetTables = resultSetTables;
+			this.databaseContainer = databaseContainer;
+			this.metaData = metaData;
+			this.catalog = catalog;
+			this.shema = shema;
 
-            // resultSetTables.beforeFirst(); // dela le z mysql resultset
+			// resultSetTables.beforeFirst(); // dela le z mysql resultset
 
-        }
+		}
 
-        @Override
-        public boolean hasNext() {
-            boolean hasNext = true;
-            try {
-                if (this.resultSetTables.isAfterLast()) {
-                    hasNext = false;
-                }
-            } finally {
-                return hasNext;
-            }
-        }
+		@Override
+		public boolean hasNext() {
+			boolean hasNext = true;
+			try {
+				if (this.resultSetTables.isAfterLast()) {
+					hasNext = false;
+				}
+			} finally {
+				return hasNext;
+			}
+		}
 
-        @Override
-        public CTable next() {
-            CTable table = null;
-            try {
+		@Override
+		public CTable next() {
+			CTable table = null;
+			try {
 
-                while (this.resultSetTables.next()) {
+				while (this.resultSetTables.next()) {
 
-                    if (this.isTableValid()) {
-                        this.currentTableIndex++;
-                        // add data to table
-                        table = databaseContainer.getNewTableInstance();
-                        table.setName(this.resultSetTables.getString(3));
-                        // add table to container
-                        databaseContainer.getTables().put(table.getName(), table);
-                        this.fillTable(table);
+					if (this.isTableValid()) {
+						this.currentTableIndex++;
+						// add data to table
+						table = databaseContainer.getNewTableInstance();
+						table.setName(this.resultSetTables.getString(3));
+						// add table to container
+						databaseContainer.getTables().put(table.getName(), table);
+						this.fillTable(table);
 
-                        // loop end
-                        break;
-                    }
-                }
+						// loop end
+						break;
+					}
+				}
 
-            } catch (SQLException e) {
-                LOG.error(e.getMessage(), e);
-            }
-            return table;
-        }
+			} catch (SQLException e) {
+				log.error(e.getMessage(), e);
+			}
+			return table;
+		}
 
-        @Override
-        public int currentIndex() {
-            return currentTableIndex;
-        }
+		@Override
+		public int currentIndex() {
+			return currentTableIndex;
+		}
 
-        private void fillTable(CTable table) throws SQLException {
-            this.addColumns(table);
-            this.setPrimaryKeys(table);
-            this.setExportedKeys(table);
-            this.setImportedKeys(table);
+		private void fillTable(CTable table) throws SQLException {
+			this.addColumns(table);
+			this.setPrimaryKeys(table);
+			this.setExportedKeys(table);
+			this.setImportedKeys(table);
 
-        }
+		}
 
-        private boolean isTableValid() throws SQLException {
-            // we check if user has access
-            String TABLE_SCHEM = this.resultSetTables.getString(2);
-            if (TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")) {
-                if (!TABLE_SCHEM.equalsIgnoreCase(databaseContainer.getConnBean().getUsername())) {
-                    return false;
-                }
-            }
+		private boolean isTableValid() throws SQLException {
+			// we check if user has access
+			String TABLE_SCHEM = this.resultSetTables.getString(2);
+			if (TABLE_SCHEM != null && !TABLE_SCHEM.equalsIgnoreCase("dbo")) {
+				if (!TABLE_SCHEM.equalsIgnoreCase(databaseContainer.getConnBean().getUsername())) {
+					return false;
+				}
+			}
 
-            // we check if is table
-            String TYPE = resultSetTables.getString(4);
-            if (!TYPE.equals("TABLE")) {
-                return false;
-            }
+			// we check if is table
+			String TYPE = resultSetTables.getString(4);
+			if (!TYPE.equals("TABLE")) {
+				return false;
+			}
 
-            String tableName = resultSetTables.getString(3); // get table name
-            if (databaseContainer.getConnBean().getDriver().equals(RDBMSType.ORACLE)) {
-                if (tableName.startsWith("BIN")) {
-                    return false;
-                }
-            }
+			String tableName = resultSetTables.getString(3); // get table name
+			if (databaseContainer.getConnBean().getDriver().equals(RDBMSType.ORACLE)) {
+				if (tableName.startsWith("BIN")) {
+					return false;
+				}
+			}
 
-            return true;
-        }
+			return true;
+		}
 
-        private int countTableColumns(String tableName) throws SQLException {
-            int initialSize = 0;
-            try (ResultSet resultSetColumns = this.metaData
-                    .getColumns(this.catalog, this.shema, tableName, null)
-                    ) {
-                // get initial size for columns
-                while (resultSetColumns.next()) {
-                    initialSize++;
-                }
-            }
-            return initialSize;
-        }
+		private int countTableColumns(String tableName) throws SQLException {
+			int initialSize = 0;
+			String shema = this.shema;
+			String catalog = this.catalog;
+			if (databaseContainer.getConnBean().getDriver().equals(RDBMSType.MSSQL)) {
+				catalog = null;
+				shema = null;
+			}
 
-        private void addColumns(CTable table) throws SQLException {
+			try (ResultSet resultSetColumns = this.metaData.getColumns(catalog, shema, tableName, null)) {
+				// get initial size for columns
+				while (resultSetColumns.next()) {
+					initialSize++;
+				}
+			}
+			return initialSize;
+		}
 
-            try (ResultSet resultSetColumns = this.metaData
-                    .getColumns(this.catalog, this.shema, table.getName(), null)
-                    ) {
-                int colCount = this.countTableColumns(table.getName());
-                table.setColumns(new ArrayList<CColumn>(colCount));
-                table.setColumnNames(new ArrayList<String>(colCount));
+		private void addColumns(CTable table) throws SQLException {
+			String shema = this.shema;
+			String catalog = this.catalog;
+			if (databaseContainer.getConnBean().getDriver().equals(RDBMSType.MSSQL)) {
+				catalog = null;
+				shema = null;
+			}
 
-                while (resultSetColumns.next()) {
-                    CColumn column = table.getNewColumnInstance();
+			int colCount = this.countTableColumns(table.getName());
+			table.setColumns(new ArrayList<CColumn>(colCount));
+			table.setColumnNames(new ArrayList<String>(colCount));
+			log.debug("Col count: " + colCount + ", Tabela: " + table.getName());
+			try (ResultSet resultSetColumns = this.metaData.getColumns(catalog, shema, table.getName(), null)) {
 
-                    column.setName(resultSetColumns.getString(4)); // column
-                                                                   // name
-                    Integer type = resultSetColumns.getInt(5);
-                    column.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column
-                                                                                            // type
+				while (resultSetColumns.next()) {
+					CColumn column = table.getNewColumnInstance();
 
-                    table.getColumns().add(column);
-                    table.getColumnNames().add(column.getName());
-                }
-            }
-        }
+					column.setName(resultSetColumns.getString(4)); // column
+																	// name
+					Integer type = resultSetColumns.getInt(5);
+					column.setType((String) Common.getInstance().getjDBCTypes().get(type)); // column
+																							// type
 
-        private void setPrimaryKeys(CTable table) throws SQLException {
-            // we add primary key info
-            try (ResultSet resultSetPrimaryKeys = this.metaData
-                    .getPrimaryKeys(this.catalog, null, table.getName())
-                    ) {
-                while (resultSetPrimaryKeys.next()) {
-                    String columnName = resultSetPrimaryKeys.getString(4);
-                    table.getColumnByName(columnName).setPrimaryKey(true);
-                }
-            }
-        }
+					table.getColumns().add(column);
+					table.getColumnNames().add(column.getName());
+				}
+			}
+		}
 
-        private void setExportedKeys(CTable table) throws SQLException {
-            try (ResultSet resultExportedKeys = this.metaData
-                    .getExportedKeys(this.catalog, null, table.getName())
-                    ) {
-                while (resultExportedKeys.next()) {
-                    String pKColumnName = resultExportedKeys.getString(4);
+		private void setPrimaryKeys(CTable table) throws SQLException {
+			// we add primary key info
+			try (ResultSet resultSetPrimaryKeys = this.metaData.getPrimaryKeys(this.catalog, null, table.getName())) {
+				while (resultSetPrimaryKeys.next()) {
+					String columnName = resultSetPrimaryKeys.getString(4);
+					table.getColumnByName(columnName).setPrimaryKey(true);
+				}
+			}
+		}
 
-                    CReference creference = table.getColumnByName(pKColumnName).getNewReferenceInstance();
-                    creference.setTable(resultExportedKeys.getString(3)); // pktable_name
-                    creference.setColumn(pKColumnName); // pkcolum_name
-                    creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
-                    creference.setReferencedColumn(resultExportedKeys.getString(8)); // fkcolum_name
+		private void setExportedKeys(CTable table) throws SQLException {
+			try (ResultSet resultExportedKeys = this.metaData.getExportedKeys(this.catalog, null, table.getName())) {
+				while (resultExportedKeys.next()) {
+					String pKColumnName = resultExportedKeys.getString(4);
 
-                    this.tempReferences.add(creference);
+					CReference creference = table.getColumnByName(pKColumnName).getNewReferenceInstance();
+					creference.setTable(resultExportedKeys.getString(3)); // pktable_name
+					creference.setColumn(pKColumnName); // pkcolum_name
+					creference.setReferencedTable(resultExportedKeys.getString(7)); // fktable_name
+					creference.setReferencedColumn(resultExportedKeys.getString(8)); // fkcolum_name
 
-                    // ctable.getColumnByName(pKColumnName).setForeignKey(true);
-                    if (table.getColumnByName(pKColumnName).getReferences() == null) {
-                        table.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
-                    }
-                    table.getColumnByName(pKColumnName).getReferences().add(creference);
-                }
-            }
-        }
+					this.tempReferences.add(creference);
 
-        private void setImportedKeys(CTable table) throws SQLException {
-            try (ResultSet resultImportedKeys = this.metaData
-                    .getImportedKeys(this.catalog, null, table.getName())
-                    ) {
-                while (resultImportedKeys.next()) {
-                    String pKColumnName = resultImportedKeys.getString(4);
-                    String fKColumnName = resultImportedKeys.getString(8);
+					// ctable.getColumnByName(pKColumnName).setForeignKey(true);
+					if (table.getColumnByName(pKColumnName).getReferences() == null) {
+						table.getColumnByName(pKColumnName).setReferences(new ArrayList<CReference>());
+					}
+					table.getColumnByName(pKColumnName).getReferences().add(creference);
+				}
+			}
+		}
 
-                    CReference creference = table.getColumnByName(fKColumnName).getNewReferenceInstance();
-                    creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
-                    creference.setReferencedColumn(pKColumnName); // pkcolum_name
-                    creference.setTable(resultImportedKeys.getString(7)); // fktable_name
-                    creference.setColumn(fKColumnName); // fkcolum_name
+		private void setImportedKeys(CTable table) throws SQLException {
+			try (ResultSet resultImportedKeys = this.metaData.getImportedKeys(this.catalog, null, table.getName())) {
+				while (resultImportedKeys.next()) {
+					String pKColumnName = resultImportedKeys.getString(4);
+					String fKColumnName = resultImportedKeys.getString(8);
 
-                    this.tempReferences.add(creference);
+					CReference creference = table.getColumnByName(fKColumnName).getNewReferenceInstance();
+					creference.setReferencedTable(resultImportedKeys.getString(3)); // pktable_name
+					creference.setReferencedColumn(pKColumnName); // pkcolum_name
+					creference.setTable(resultImportedKeys.getString(7)); // fktable_name
+					creference.setColumn(fKColumnName); // fkcolum_name
 
-                    table.getColumnByName(fKColumnName).setForeignKey(true);
+					this.tempReferences.add(creference);
 
-                    if (table.getColumnByName(fKColumnName).getReferences() == null) {
-                        table.getColumnByName(fKColumnName).setReferences(new ArrayList<CReference>());
-                    }
-                    table.getColumnByName(fKColumnName).getReferences().add(creference);
-                }
-            }
-        }
+					table.getColumnByName(fKColumnName).setForeignKey(true);
 
-    }
+					if (table.getColumnByName(fKColumnName).getReferences() == null) {
+						table.getColumnByName(fKColumnName).setReferences(new ArrayList<CReference>());
+					}
+					table.getColumnByName(fKColumnName).getReferences().add(creference);
+				}
+			}
+		}
+
+	}
 
 }

@@ -22,10 +22,18 @@ package si.comptus.jrelex.database;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.apache.poi.ss.formula.functions.Match;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import si.comptus.jrelex.Common;
 import si.comptus.jrelex.container.CTable;
@@ -42,8 +50,11 @@ import com.panemu.tiwulfx.common.TableCriteria.Operator;
  * @param <T> Type of table cell value.
  */
 public abstract class DynamicQueryAbstract<T> {
-	private Connection conn;
-	
+
+    private static final Logger log = LoggerFactory
+            .getLogger(DynamicQueryAbstract.class);
+    private Connection conn;
+
     private ArrayList<String> getSQLNumericTypes(){
         ArrayList<String> types = new ArrayList<>();
         types.add("DECIMAL");
@@ -57,7 +68,7 @@ public abstract class DynamicQueryAbstract<T> {
         types.add("TINYINT");
         return types;
     }
-    
+
     public Connection getConn() {
         return conn;
     }
@@ -112,7 +123,7 @@ public abstract class DynamicQueryAbstract<T> {
 
     abstract public int getRecordCount(CTable table, String databaseName,
             List<TableCriteria<T>> filteredColumns);
-    
+
     protected ArrayList<String> conditions(CTable table, List<TableCriteria<T>> filteredColumns) {
 
         ArrayList<String> conditions = new ArrayList<>(filteredColumns.size());
@@ -180,66 +191,98 @@ public abstract class DynamicQueryAbstract<T> {
         }
         return conditions;
     }
-    
+
     protected PreparedStatement getPrepStmtWithValues(String sql, List<TableCriteria<T>> filteredColumns) throws SQLException{
-    	PreparedStatement stmt = this.conn.prepareStatement(sql);
-    	this.setWhereValues(stmt, filteredColumns);
-    	return stmt;
+        PreparedStatement stmt = this.getConn().prepareStatement(sql);
+        this.setWhereValues(stmt, filteredColumns);
+        return stmt;
     }
-    
-    protected void setWhereValues(PreparedStatement stmt, List<TableCriteria<T>> filteredColumns) throws SQLException {
-    	int n = 1;
-    	for (TableCriteria<? extends Object> filteredColumn : filteredColumns) {
-    		Operator operator = filteredColumn.getOperator();
-    		String prefix = "";
-    		String suffix = "";
-    		switch (operator) {
-            case like_begin:
-            	suffix = "%";
-                break;
-            case like_anywhere:
-            	prefix = "%";
-            	suffix = "%";
-                break;
-            case like_end:
-            	prefix = "%";
-                break;
-            case ilike_begin:
-            	suffix = "%";
-                break;
-            case ilike_anywhere:
-            	prefix = "%";
-            	suffix = "%";
-                break;
-            case ilike_end:
-            	prefix = "%";
-                break;
-            default:
+
+    private void setWhereValues(PreparedStatement stmt, List<TableCriteria<T>> filteredColumns) throws SQLException {
+        int n = 1;
+        for (TableCriteria<? extends Object> filteredColumn : filteredColumns) {
+            Operator operator = filteredColumn.getOperator();
+            if(operator.name().equals("is_null")
+                    || operator.name().equals("is_not_null")) { // don't add values
+                continue;
             }
-    		
+
+            String prefix = "";
+            String suffix = "";
+            switch (operator) {
+                case like_begin:
+                    suffix = "%";
+                    break;
+                case like_anywhere:
+                    prefix = "%";
+                    suffix = "%";
+                    break;
+                case like_end:
+                    prefix = "%";
+                    break;
+                case ilike_begin:
+                    suffix = "%";
+                    break;
+                case ilike_anywhere:
+                    prefix = "%";
+                    suffix = "%";
+                    break;
+                case ilike_end:
+                    prefix = "%";
+                    break;
+                default:
+            }
+
             if(filteredColumn.getValue() instanceof String) {
-            	stmt.setString(n, prefix + filteredColumn.getValue().toString() + suffix);
+                // Check if it is date or datetime!
+                Pattern p = Pattern.compile("....-..-.. .*");
+                Matcher m = p.matcher(filteredColumn.getValue().toString());
+                log.debug(filteredColumn.getValue().toString());
+                if(m.matches()){
+                    try {
+                        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+                        Date tmpDate = formatter.parse(filteredColumn.getValue().toString());
+                        stmt.setTimestamp(n, new java.sql.Timestamp(tmpDate.getTime()));
+                        log.debug(formatter.format(tmpDate));
+                    }catch (ParseException e){
+                        try {
+                            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+                            Date tmpDate = formatter.parse(filteredColumn.getValue().toString());
+                            stmt.setDate(n, new java.sql.Date(tmpDate.getTime()));
+                            log.debug(formatter.format(tmpDate));
+                        } catch (ParseException e2){
+                            // it's string
+                            stmt.setString(n, prefix + filteredColumn.getValue().toString() + suffix);
+                            log.debug(filteredColumn.getValue().toString());
+                        }
+                    }
+                } else {
+                    stmt.setString(n, prefix + filteredColumn.getValue().toString() + suffix);
+                    log.debug(filteredColumn.getValue().toString());
+                }
+
+
             }
             if(filteredColumn.getValue() instanceof Date) {
-            	stmt.setDate(n, (java.sql.Date)filteredColumn.getValue());
+                stmt.setDate(n, (java.sql.Date)filteredColumn.getValue());
             }
             if(filteredColumn.getValue() instanceof Boolean) {
-            	stmt.setBoolean(n, (Boolean)filteredColumn.getValue());
+                stmt.setBoolean(n, (Boolean)filteredColumn.getValue());
             }
             if(filteredColumn.getValue() instanceof Integer) {
-            	stmt.setInt(n, (Integer)filteredColumn.getValue());
+                stmt.setInt(n, (Integer)filteredColumn.getValue());
             }
             if(filteredColumn.getValue() instanceof Float) {
-            	stmt.setFloat(n, (Float)filteredColumn.getValue());
+                stmt.setFloat(n, (Float)filteredColumn.getValue());
             }
             if(filteredColumn.getValue() instanceof Double) {
-            	stmt.setDouble(n, (Double)filteredColumn.getValue());
+                stmt.setDouble(n, (Double)filteredColumn.getValue());
             }
             if(filteredColumn.getValue() instanceof Double) {
-            	stmt.setDouble(n, (Double)filteredColumn.getValue());
+                stmt.setDouble(n, (Double)filteredColumn.getValue());
             }
             n++;
-    	}
+        }
     }
 
     /**

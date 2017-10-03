@@ -105,8 +105,8 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
 
         String sql = sql1 + sql2 + sql3;
 
-        PreparedStatement stmt = this.conn.prepareStatement(sql);
-        
+        PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
+
         log.debug(sql);
         return stmt;
     }
@@ -149,7 +149,7 @@ public class SqlserverDynamicQuery<T> extends DynamicQueryAbstract<T> {
         log.debug(sql);
         int count = 0;
         try (PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
-        		ResultSet rs = stmt.executeQuery();) {
+                ResultSet rs = stmt.executeQuery();) {
             if (rs != null) {
                 rs.next();
                 count = rs.getInt("c");

@@ -33,8 +33,10 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -45,6 +47,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -61,6 +64,9 @@ import com.panemu.tiwulfx.control.DetachableTabPane;
  */
 public class DatabaseExplorerController implements Initializable {
 
+    /**
+     *
+     */
     @FXML
     public TreeView<String> trvDatabaseList;
     @FXML
@@ -129,6 +135,33 @@ public class DatabaseExplorerController implements Initializable {
             }
         });
 
+        final MenuItem itemCloseOthers = new MenuItem("Close All But Selected");
+        itemCloseOthers.setOnAction(event -> {
+            Tab tempTab = null;
+            for(Tab tab : exploreTablesTabPane.getTabs()){
+                if(tab.isSelected()) {
+                    tempTab = tab;
+                }
+            }
+            exploreTablesTabPane.getTabs().clear();
+            exploreTablesTabPane.getTabs().add(tempTab);
+        });
+
+        final MenuItem itemCloseAll = new MenuItem("Close All");
+        itemCloseAll.setOnAction(event -> {
+            exploreTablesTabPane.getTabs().clear();
+        });
+
+        exploreTablesTabPane.setOnMouseClicked(event -> {
+            if(event.getButton() == MouseButton.SECONDARY) {
+                ContextMenu menu = new ContextMenu(
+                        itemCloseOthers,itemCloseAll
+                        );
+                menu.show(exploreTablesTabPane.getScene().getWindow(),
+                        event.getScreenX(), event.getScreenY());
+            }
+        });
+
     }
 
     public void filterDatabasesFromTreeView(KeyEvent event) {
@@ -187,11 +220,6 @@ public class DatabaseExplorerController implements Initializable {
             CDatabase storedDatabase = pairs.getValue();
 
             // user can select to see database in tree view
-            /*
-             if(!storedDatabase.isVisible()){
-             continue;
-             }
-             */
             String storedDatabaseName = pairs.getKey();
 
             if (this.filterName(storedDatabaseName, this.DBFilterValue)) {

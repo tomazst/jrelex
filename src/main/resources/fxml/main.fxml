@@ -46,14 +46,6 @@
                     </ImageView>
                 </graphic>
             </Button>
-            <Button styleClass="jrx-menu-button" onAction="#appClose">
-                <tooltip><Tooltip text="Close" /></tooltip>
-                <graphic>
-                    <ImageView>
-                       <image><Image url="@/images/b_close.png" /></image>
-                    </ImageView>
-                </graphic>
-            </Button>
           </children>
         </HBox>
       </right>

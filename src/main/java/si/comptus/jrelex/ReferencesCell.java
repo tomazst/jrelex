@@ -65,7 +65,7 @@ public class ReferencesCell<S, T> extends TableCell<S, T> {
                     tableCell.getTableView().getSelectionModel().select(tableCell.getTableRow().getIndex());
                     // Dialog dialog = new Dialog<T>(item, tableCell);
 
-                    ColumnRefToTablesView ref = new ColumnRefToTablesView();
+                    ColumnValueReferences ref = new ColumnValueReferences();
                     ref.showReferences((HashMap<String, CColumnTableReferences>) item, tableCell);
 
                 }

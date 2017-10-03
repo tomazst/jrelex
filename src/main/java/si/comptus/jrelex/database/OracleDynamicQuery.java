@@ -101,10 +101,9 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         String beforeSql = "SELECT " + columns + " FROM (  SELECT S1.*, ROWNUM RNUM  FROM  (";
         String afterSql = " ) S1  WHERE ROWNUM < " + lastIndex + ") WHERE RNUM >= " + startIndex;
         String sql = beforeSql + sql1 + where + orderby + afterSql;
-        PreparedStatement stmt = this.conn.prepareStatement(sql);
-        this.setWhereValues(stmt, filteredColumns);
-        
         log.debug(sql);
+
+        PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
         return stmt;
     }
 
@@ -146,7 +145,7 @@ public class OracleDynamicQuery<T> extends DynamicQueryAbstract<T> {
         log.debug(sql);
         int count = 0;
         try (PreparedStatement stmt = this.getPrepStmtWithValues(sql, filteredColumns);
-        		ResultSet rs = stmt.executeQuery();) {
+                ResultSet rs = stmt.executeQuery();) {
             if (rs != null) {
                 rs.next();
                 count = rs.getInt("c");

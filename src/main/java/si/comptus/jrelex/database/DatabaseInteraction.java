@@ -146,7 +146,7 @@ public class DatabaseInteraction {
         MysqlDataSource ds = new MysqlDataSource();
         ds.setServerName(servername);
         ds.setPortNumber(port);
-        if (database != null) {
+        if (database != null && !database.isEmpty()) {
             ds.setDatabaseName(database);
         }
         ds.setUser(user);
@@ -164,7 +164,7 @@ public class DatabaseInteraction {
 
         ds.setServerName(servername);
         ds.setPortNumber(port);
-        if (database != null) {
+        if (database != null && !database.isEmpty()) {
             ds.setDatabaseName(database);
         }
         ds.setUser(user);
@@ -209,7 +209,8 @@ public class DatabaseInteraction {
                 }
             }
         } else {
-            try(ResultSet dbs = ds.getConnection().getMetaData().getCatalogs()){
+        	Connection c = ds.getConnection();
+            try(ResultSet dbs =c.getMetaData().getCatalogs()){
                 while (dbs.next()) {
                     databaseList.add(dbs.getString(1));
                 }
