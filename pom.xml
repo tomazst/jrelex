@@ -38,6 +38,33 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>jrelex</id>
+            <repositories>
+                <repository>
+                    <id>Central</id>
+                    <name>Maven Repository</name>
+                    <url>http://central.maven.org/maven2/</url>
+                </repository>
+                <repository><!-- com/panemu/tiwulfx/2.0-SNAPSHOT -->
+                    <id>Sonatype</id>
+                    <name>Maven Repository</name>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+                </repository>
+                <repository><!-- com/microsoft/sqlserver/sqljdbc4/4.0 -->
+                    <id>Clojars</id>
+                    <name>Maven Repository</name>
+                    <url>http://clojars.org/repo/</url>
+                </repository>
+                <repository><!-- com/oracle/ojdbc14/10.2.0.3 -->
+                    <id>codelds</id>
+                    <name>Maven Repository</name>
+                    <url>https://code.lds.org/nexus/content/groups/main-repo</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
     <dependencies>
         <!-- MigLayout -->
         <dependency>
@@ -79,13 +106,13 @@
         </dependency>
         <dependency>
             <groupId>com.oracle</groupId>
-            <artifactId>ojdbc</artifactId>
-            <version>12.1.0.2</version>
+            <artifactId>ojdbc14</artifactId>
+            <version>10.2.0.3</version>
         </dependency>
         <dependency>
                 <groupId>com.microsoft.sqlserver</groupId>
-                <artifactId>sqljdbc42</artifactId>
-                <version>4.2</version>
+                <artifactId>sqljdbc4</artifactId>
+                <version>4.0</version>
         </dependency>
         <dependency>
                 <groupId>javassist</groupId>
