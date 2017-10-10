@@ -6,7 +6,7 @@ JRelEx is a java application. It is developed on javafx platform and is intended
 
 ### Build
 
-It's a maven project. To succesfully build project you must add activeProfile jrelex to .m2/settings.xml file in a local repository.
+It's a maven project. To succesfully build project you must use the jrelex profile. You may add it as activeProfile in .m2/settings.xml file in a local repository.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" 
