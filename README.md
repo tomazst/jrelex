@@ -4,7 +4,7 @@ Desktop application to explore database data using relations
 JRelEx is a java application. It is developed on javafx platform and is intended for searching data using database relations.
 
 
-## Build
+### Build
 
 It's a maven project. To succesfully build project you must add activeProfile jrelex to .m2/settings.xml file in a local repository.
 ```xml
@@ -18,14 +18,14 @@ It's a maven project. To succesfully build project you must add activeProfile jr
 </settings>
 ```
 
-## Build jar application
+### Build jar application
 
 ```
 mvn jfx:jar
 ```
 Jar is stored into jfx/app folder.
 
-## Build native application
+### Build native application
 
 ```
 mvn jfx:native
