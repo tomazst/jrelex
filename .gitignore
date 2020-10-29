@@ -3,5 +3,7 @@ target/
 .classpath
 .project
 .settings
+.idea
+*.iml
 nb-configuration.xml
 bin/
