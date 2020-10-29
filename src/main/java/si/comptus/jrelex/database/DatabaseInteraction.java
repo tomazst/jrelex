@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import si.comptus.jrelex.container.ConnBean;
 
 import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
-import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import com.mysql.cj.jdbc.MysqlDataSource;
 import com.panemu.tiwulfx.dialog.MessageDialogBuilder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
