@@ -23,11 +23,13 @@ package si.comptus.jrelex.database;
 import java.sql.Connection;
 import java.util.HashMap;
 
+import javax.naming.InitialContext;
 import javax.sql.DataSource;
-
 import oracle.jdbc.pool.OracleDataSource;
 
 //import org.apache.ddlutils.PlatformUtils;
+import oracle.jdbc.pool.OracleConnectionPoolDataSource;
+import oracle.jdbc.pool.OracleDataSourceFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
